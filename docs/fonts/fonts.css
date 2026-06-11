@@ -1,0 +1,29 @@
+/* Self-hosted fonts for kifarkis.com (variable TTF, all browsers) */
+@font-face {
+  font-family: 'Fraunces';
+  src: url('Fraunces-VariableFont_SOFT_WONK_opsz_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('Fraunces-Italic-VariableFont_SOFT_WONK_opsz_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('InstrumentSans-VariableFont_wdth_wght.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('JetBrainsMono-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}

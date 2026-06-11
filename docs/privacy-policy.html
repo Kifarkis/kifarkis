@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy · Kifarkis</title>
+<meta name="description" content="How Kifarkis Design & Automation collects, uses and protects personal data.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-6 0 56 56'%3E%3Cpath d='M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24' stroke='%2315120E' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Crect x='6' y='22' width='32' height='28' rx='2' fill='%239C4A2A'/%3E%3Ccircle cx='22' cy='34' r='2.2' fill='%23EFEAE0'/%3E%3Crect x='20.9' y='34' width='2.2' height='6' fill='%23EFEAE0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root {
+    --bg: #EFEAE0; --bg-warmer: #ECE5D3;
+    --ink: #15120E; --ink-soft: #4A4239;
+    --accent: #9C4A2A; --accent-bright: #E88B6A;
+    --muted: #7D7365;
+    --rule: #D6CEC0; --rule-light: #B5AC9F;
+    --size-l:clamp(1.9rem,3vw,2.5rem); --size-m:clamp(1.15rem,1.7vw,1.45rem); --size-s:clamp(1rem,1.2vw,1.12rem);
+    --bg-soot:#C4BCB3;
+    --footer-h: 56px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg-soot); color: var(--ink);
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    padding-bottom: var(--footer-h);
+  }
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  /* HEADER (locked) */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    padding: 8px clamp(20px, 4vw, 56px);
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background-color 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, padding 0.3s ease;
+    border-bottom: 1px solid transparent;
+  }
+  .header.scrolled {
+    background-color: rgba(239, 234, 224, 0.35);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom-color: var(--rule);
+    padding: 6px clamp(20px, 4vw, 56px);
+  }
+  .header-brand { display: flex; align-items: center; gap: 18px; text-decoration: none; color: var(--ink); transition: opacity 0.2s ease; }
+  .header-brand:hover { opacity: 0.75; }
+  .logo-mark { display: flex; align-items: stretch; gap: 6px; line-height: 0; }
+  .logo-word { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; letter-spacing: 0.02em; line-height: 1; writing-mode: vertical-rl; transform: rotate(180deg); color: var(--ink); padding: 1px 0; white-space: nowrap; }
+  .logo-rule-stack { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .logo-lock { width: 13px; height: 16px; flex-shrink: 0; color: var(--ink); display: block; }
+  .logo-rule { width: 1.5px; flex: 1; background: var(--accent); min-height: 12px; }
+  .header-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); }
+  @media (max-width: 540px) { .header-label { display: none; } }
+  .header-nav { display: flex; gap: clamp(12px, 2.5vw, 28px); align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.16em; }
+  .header-nav a { text-decoration: none; color: var(--ink); padding: 6px 0; transition: color 0.2s ease; }
+  .header-nav a:hover { color: var(--accent); }
+  .header-nav a.nav-active { color: var(--accent); }
+  .header-nav .lang { color: var(--rule-light); padding-left: clamp(6px, 1.5vw, 14px); border-left: 1px solid var(--rule); }
+  .header-nav .lang .active { color: var(--accent); }
+  .header-nav .lang a { color: var(--muted); text-decoration: none; transition: color 0.2s ease; }
+  .header-nav .lang a:hover { color: var(--accent); }
+  .header-nav .lang a.active { color: var(--accent); }
+  @media (max-width: 720px) { .header-nav a:not(.lang) { display: none; } .header-nav .lang a { display: inline; } }
+
+  /* FIELD */
+  .page-bg { position:fixed; inset:0; z-index:-2; pointer-events:none; background:var(--bg-soot); }
+  .grain {
+    position: fixed; inset: 0; pointer-events: none;
+    opacity: 0.20; mix-blend-mode: multiply; z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .page-deco { position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:visible; }
+  .deco {
+    position: absolute; pointer-events: none;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    will-change: transform, opacity;
+  }
+
+  /* atmosphere */
+  .atm-1 {
+    z-index: 1; width: 50vw; aspect-ratio: 0.85 / 1;
+    top: 8%; right: -12%;
+    background-image: url("assets/terracotta-shape.png");
+    opacity: 0.10; filter: blur(2px);
+    animation: blobBreath 24s ease-in-out infinite;
+  }
+  .atm-2 {
+    z-index: 1; width: 38vw; aspect-ratio: 0.85 / 1;
+    bottom: -14%; right: -6%;
+    background-image: url("assets/terracotta-shape-2.png");
+    opacity: 0.09; filter: blur(1.5px);
+    animation: blobDrift 28s ease-in-out infinite reverse;
+  }
+  @keyframes blobBreath { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.06) rotate(3deg); } }
+  @keyframes blobDrift { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 50% { transform: translate(-3vw, -2vh) rotate(-3deg); } }
+
+  /* brushstroke */
+  .brush-1 {
+    z-index: 3; width: 56vw; aspect-ratio: 1 / 1;
+    bottom: -22vh; left: -10vw;
+    background-image: url("assets/brushstroke.png");
+    opacity: 0.85;
+    animation: brushDriftA 16s ease-in-out infinite;
+  }
+  @keyframes brushDriftA { 0%, 100% { transform: translate(0, 0) rotate(-2deg); } 50% { transform: translate(2vw, -1vh) rotate(-1deg); } }
+
+  /* paper scrap */
+  .paper-1 {
+    z-index: 4; width: 14vw; aspect-ratio: 1 / 1;
+    top: 12vh; right: 7vw;
+    background-image: url("assets/paper-scrap.png");
+    opacity: 0.78;
+    transform: rotate(-4deg);
+    animation: paperFloatA 14s ease-in-out infinite;
+  }
+  @keyframes paperFloatA { 0%, 100% { transform: rotate(-4deg) translate(0, 0); } 50% { transform: rotate(-2.5deg) translate(0, -10px); } }
+
+  /* compass stars */
+  .compass-1 {
+    z-index: 4; width: 6vw; aspect-ratio: 1 / 1;
+    top: 16vh; left: 5vw;
+    background-image: url("assets/glyph-compass.png");
+    opacity: 0.85;
+    animation: compassRotate 80s linear infinite;
+  }
+  .compass-2 {
+    z-index: 4; width: 3vw; aspect-ratio: 1 / 1;
+    top: 64vh; right: 38vw;
+    background-image: url("assets/glyph-compass.png");
+    opacity: 0.40;
+    animation: compassRotate 60s linear infinite reverse;
+  }
+  @keyframes compassRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* asterisks */
+  .ast {
+    position: absolute; pointer-events: none;
+    aspect-ratio: 1 / 1;
+    background-image: url("assets/glyph-asterisk.png");
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    will-change: transform, opacity;
+    z-index: 4;
+  }
+  @keyframes astSpinA { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  @keyframes astSpinB { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
+  @keyframes astFloatA { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(0, -16px); } }
+  @keyframes astFloatB { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(8px, -10px); } }
+  @keyframes astBlink { 0%, 100% { opacity: var(--base-op, 1); } 50% { opacity: 0.2; } }
+
+  /* arrow */
+  .arrow-1 {
+    z-index: 6; width: clamp(40px, 3.5vw, 80px); aspect-ratio: 1 / 1;
+    top: 32vh; right: 24vw;
+    background-image: url("assets/glyph-arrow.png");
+    opacity: 0;
+    transform: rotate(-20deg) translateY(-8px);
+    animation: arrowEnter 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 2s forwards,
+               arrowFloat 4s ease-in-out 3.5s infinite;
+  }
+  @keyframes arrowEnter { to { opacity: 0.55; transform: rotate(-20deg) translateY(0); } }
+  @keyframes arrowFloat { 0%, 100% { transform: rotate(-20deg) translateY(0); } 50% { transform: rotate(-20deg) translateY(-6px); } }
+
+  /* HERO CONTENT */
+  .hero-content {
+    position: relative; z-index: 10;
+    width: 100%;
+    max-width: 1900px;
+    margin: 0 auto;
+    padding: clamp(140px, 18vh, 240px) clamp(28px, 6vw, 120px) clamp(80px, 12vh, 160px);
+  }
+  @media (max-width:860px) { .page-deco .deco, .page-deco .ast { display:none; } .page-deco .atm-1, .page-deco .brush-1 { display:block; } }
+
+  /* CONTENT GRID (same template as homepage stage2) */
+  .stage2 {
+    position:relative; display:grid;
+    grid-template-columns:120px minmax(0,660px) 1fr;
+    column-gap:clamp(24px,4vw,64px);
+    max-width:1600px; margin:0 auto; padding:0 clamp(20px,4vw,56px);
+  }
+  .stage2 > .s2 { grid-column:2; position:relative; z-index:2; }
+  .subpage { padding-top:clamp(170px,24vh,300px); padding-bottom:clamp(90px,13vh,150px); }
+  .arrival-glow { position:absolute; z-index:0; top:clamp(40px,8vh,120px); right:-6%; width:min(42vw,580px); aspect-ratio:1/1.05; border-radius:50%; pointer-events:none; filter:blur(9px);
+    background:radial-gradient(circle at 50% 42%, rgba(156,74,42,0.14), rgba(156,74,42,0.05) 46%, rgba(156,74,42,0) 70%); }
+  .aw { display:inline-block; white-space:nowrap; }
+  .al { display:inline-block; will-change:transform; }
+
+  /* SPINE */
+  .spine { position:absolute; width:1.5px; z-index:2; }
+  .spine-track { position:absolute; inset:0; background:var(--rule); }
+  .spine-fill { position:absolute; top:0; left:0; right:0; height:0; background:var(--accent); }
+  .spine-dot { position:absolute; left:50%; top:0; width:7px; height:7px; border-radius:50%; background:var(--accent); transform:translate(-50%,-50%); box-shadow:0 0 0 4px rgba(156,74,42,0.12); }
+  .smark { position:absolute; left:0; top:4px; width:9px; height:1.5px; background:var(--rule-light); display:block; }
+  .smark i { position:absolute; left:-34px; top:-7px; font-style:normal; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; color:var(--muted); }
+
+  /* TEXT COMPONENTS (locked values) */
+  .eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); margin:0 0 20px; }
+  .p-title { font-family:'Fraunces',serif; font-weight:400; color:var(--ink); margin:0 0 12px; letter-spacing:-0.02em; line-height:1.06; font-size:var(--size-l); }
+  .p-lede { font-family:'Fraunces',serif; font-style:italic; font-size:var(--size-m); color:var(--ink-soft); margin:0 0 22px; line-height:1.3; }
+  .p-body { font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); line-height:1.62; color:var(--ink-soft); margin:0; max-width:600px; }
+  .p-body + .p-body { margin-top:14px; }
+  .sec { margin-top:clamp(42px,6vh,68px); }
+  .mlabel { display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); margin:0 0 12px; }
+  .rep { margin-top:26px; padding-left:22px; border-left:2px solid var(--accent); max-width:600px; }
+  .rep-frame { display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
+  .rep .scene { font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); line-height:1.56; color:var(--ink-soft); margin:0; }
+  .rep .scene + .scene { margin-top:13px; }
+  .rep .agg { font-family:'Fraunces',serif; font-size:var(--size-m); line-height:1.4; color:var(--ink); margin:0 0 13px; }
+  .accent { color:var(--accent); font-style:italic; }
+
+  /* CTA */
+  .cta-block { margin-top:clamp(50px,8vh,84px); }
+  .cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    text-decoration: none;
+    padding: 16px 26px;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+    border: 1px solid var(--ink);
+    background: var(--ink); color: var(--bg);
+  }
+  .cta:hover { transform: translateY(-2px); background: var(--accent); border-color: var(--accent); }
+  .cta .arr { font-size: 14px; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .cta:hover .arr { transform: translateX(4px); }
+  .cta-note { font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); line-height:1.6; color:var(--muted); margin:16px 0 0; max-width:600px; }
+
+  /* FORM (Kontakt) */
+  .kform { margin-top:26px; max-width:600px; display:grid; gap:18px; }
+  .kfield { display:grid; gap:8px; }
+  .kfield label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--muted); }
+  .kfield input, .kfield textarea {
+    background: transparent; border: 1px solid var(--rule);
+    font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); color:var(--ink);
+    padding: 12px 14px; border-radius: 0; width: 100%;
+    transition: border-color 0.2s ease;
+  }
+  .kfield input:focus, .kfield textarea:focus { outline: none; border-color: var(--accent); }
+  .kfield textarea { min-height: 150px; resize: vertical; line-height: 1.55; }
+  .kform-small { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; color:var(--muted); margin:0; line-height:1.7; }
+  .kform-thanks { font-family:'Fraunces',serif; font-size:var(--size-m); color:var(--ink); margin:10px 0 0; }
+  .kform-error { font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); color:var(--accent); margin:0; display:none; }
+
+  /* MOBILE MENU */
+  .menu-btn { display:none; background:none; border:none; cursor:pointer; padding:8px 0 8px 8px; z-index:70; }
+  .menu-btn span { display:block; width:22px; height:1.5px; background:var(--ink); margin:5px 0; transition:transform 0.3s ease, opacity 0.3s ease; }
+  .menu-btn.open span:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+  .menu-btn.open span:nth-child(2) { opacity:0; }
+  .menu-btn.open span:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+  @media (max-width:720px) { .menu-btn { display:block; } }
+  .mobile-menu {
+    position:fixed; inset:0; z-index:60;
+    background:rgba(196,188,179,0.96);
+    backdrop-filter:saturate(160%) blur(16px);
+    -webkit-backdrop-filter:saturate(160%) blur(16px);
+    display:flex; flex-direction:column; justify-content:center;
+    padding:0 clamp(28px,8vw,56px);
+    opacity:0; pointer-events:none; transition:opacity 0.35s ease;
+  }
+  .mobile-menu::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:0.20; mix-blend-mode:multiply; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"); }
+  .mobile-menu.open { opacity:1; pointer-events:auto; }
+  .mm-link { font-family:'Fraunces',serif; font-size:clamp(1.2rem,4.8vw,1.55rem); color:var(--ink); text-decoration:none; padding:10px 0; display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--rule); }
+  .mm-link .idx { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); letter-spacing:0.12em; }
+  .mm-link.nav-active { color:var(--accent); }
+  .mm-lang { margin-top:24px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.16em; color:var(--rule-light); }
+  .mm-lang .active { color:var(--accent); }
+  .mm-lang a { color:var(--muted); text-decoration:none; }
+  .mm-lang a.active { color:var(--accent); }
+  body.menu-open { overflow:hidden; }
+
+  /* FOOTER (locked) */
+  .footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    height: var(--footer-h);
+    padding: 0 clamp(20px, 4vw, 56px);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    background: rgba(239, 234, 224, 0.85);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-top: 1px solid var(--rule);
+  }
+  .footer .meta {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
+  }
+  .footer .meta .sep { color: var(--rule-light); margin: 0 6px; }
+  .footer-link {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+    cursor: pointer; background: none; border: none; padding: 0;
+  }
+  .footer-link:hover { color: var(--accent); }
+  @media (max-width: 720px) { .footer .meta .full { display: none; } }
+
+  /* mobile */
+  @media (max-width:860px) {
+    .stage2 { grid-template-columns:1fr; }
+    .stage2 > .s2 { grid-column:1; }
+    .spine { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="page-deco">
+  <div class="deco atm-1 parallax" data-depth="0.3"></div>
+  <div class="deco atm-2 parallax" data-depth="0.4"></div>
+  <div class="deco brush-1 parallax" data-depth="0.55"></div>
+  <div class="deco paper-1 parallax" data-depth="1.2"></div>
+  <div class="deco compass-1 parallax" data-depth="1.0"></div>
+  <div class="deco compass-2 parallax" data-depth="0.6"></div>
+
+  <div class="ast parallax" data-depth="1.23" style="top:14vh;right:8vw;width:min(2.4vw, 54px);opacity:0.85;transform:rotate(12deg);animation:astSpinA 24s linear 0s infinite;"></div>
+  <div class="ast parallax" data-depth="1.52" style="top:22vh;right:22vw;width:min(1.4vw, 34px);opacity:0.65;transform:rotate(0deg);animation:astBlink 7s linear 1s infinite;"></div>
+  <div class="ast parallax" data-depth="2.26" style="top:38vh;right:4vw;width:min(4.2vw, 90px);opacity:0.16;transform:rotate(22deg);animation:astSpinA 50s linear 2s infinite;"></div>
+  <div class="ast parallax" data-depth="2.29" style="top:72vh;right:32vw;width:min(4.5vw, 95px);opacity:0.14;transform:rotate(-15deg);animation:astSpinB 60s linear 1s infinite;"></div>
+  <div class="ast parallax" data-depth="1.67" style="top:30vh;right:38vw;width:min(1.6vw, 38px);opacity:0.55;transform:rotate(0deg);animation:astFloatA 9s linear 0s infinite;"></div>
+  <div class="ast parallax" data-depth="1.08" style="top:54vh;right:6vw;width:min(0.9vw, 22px);opacity:0.95;transform:rotate(0deg);animation:astSpinA 14s linear 0s infinite;"></div>
+  <div class="ast parallax" data-depth="1.98" style="top:86vh;left:46vw;width:min(1.4vw, 32px);opacity:0.35;transform:rotate(30deg);animation:astFloatB 8s linear 3s infinite;"></div>
+  <div class="ast parallax" data-depth="1.30" style="top:44vh;right:14vw;width:min(1.0vw, 24px);opacity:0.8;transform:rotate(0deg);animation:astBlink 8s linear 1s infinite;"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<header class="header" id="header">
+  <a href="home.html" class="header-brand" aria-label="Kifarkis Design &amp; Automation">
+    <span class="logo-mark" aria-hidden="true">
+      <span class="logo-word">kifarkis</span>
+      <span class="logo-rule-stack">
+        <svg class="logo-lock" viewBox="0 0 44 56" aria-hidden="true">
+          <path d="M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="6" y="22" width="32" height="28" rx="2" fill="var(--accent)"/>
+          <circle cx="22" cy="34" r="2.2" fill="var(--bg)"/>
+          <rect x="20.9" y="34" width="2.2" height="6" fill="var(--bg)"/>
+        </svg>
+        <span class="logo-rule"></span>
+      </span>
+    </span>
+    <span class="header-label">Design &amp; Automation</span>
+  </a>
+  <nav class="header-nav">
+    <a href="automation.html">AI automation</a>
+    <a href="web.html">Web</a>
+    <a href="work.html">Work</a>
+    <a href="about.html">About</a>
+    <span class="lang"><a href="privacy.html">SV</a> / <a class="active" href="privacy-policy.html">EN</a></span>
+  </nav>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a class="mm-link" href="automation.html"><span class="idx">01</span> AI automation</a>
+  <a class="mm-link" href="web.html"><span class="idx">02</span> Web &amp; design</a>
+  <a class="mm-link" href="work.html"><span class="idx">03</span> Work</a>
+  <a class="mm-link" href="about.html"><span class="idx">04</span> About</a>
+  <a class="mm-link" href="contact.html"><span class="idx">05</span> Contact</a>
+  <p class="mm-lang"><a href="privacy.html">SV</a> / <a class="active" href="privacy-policy.html">EN</a></p>
+</div>
+
+<main class="stage2 subpage">
+  <div class="arrival-glow" aria-hidden="true"></div>
+  <div class="spine" aria-hidden="true">
+    <div class="spine-track"></div>
+    <div class="spine-fill"></div>
+    <div class="spine-dot"></div>
+    
+  </div>
+  <article class="s2">
+    <p class="eyebrow arr-eyebrow">Legal</p>
+    <h1 class="p-title arr-title">Privacy Policy</h1>
+    <p class="p-lede arr-lede">How we collect, use and protect personal data.</p>
+    <p class="p-body reveal">This English version is the legally binding document. The Swedish translation (<a href="privacy.html" style="color:inherit;">Integritetspolicy</a>) is provided as a reader service. The policy covers the website kifarkis.com and our client engagements. Last updated: 11 June 2026.</p>
+    <div class="sec reveal">
+      <span class="mlabel">1 · Who we are</span>
+      <p class="p-body">The data controller is Design & Animation i Vellinge AB, Vellinge, Sweden, operating the brand Kifarkis Design & Automation. Contact: info@kifarkis.com. We process personal data under the EU General Data Protection Regulation (GDPR) and the Swedish Data Protection Act.</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">2 · What we collect</span>
+      <p class="p-body">Through the contact form: your name, email address, company (optional) and your message. Nothing else. We never ask for more than what is needed to reply to you.</p>
+      <p class="p-body">During client engagements we may process personal data on your behalf. That processing is governed by a separate Data Processing Agreement, and we process the data only for the purposes agreed there.</p>
+      <p class="p-body">Our host, GitHub Pages (GitHub, Inc., USA), keeps technical logs for security and operations (IP address, browser, timestamp). We use Google Search Console for aggregated search statistics, which does not track individual visitors. We use no behavioural tracking, no Google Analytics, no advertising pixels.</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">3 · Legal basis and use</span>
+      <p class="p-body">We process data based on your consent (when you submit the form), contract (when delivering an engagement), legitimate interest (security logs) or legal obligation (accounting, for example). Data is used only for the purpose it was given for. We never sell personal data and never use it for marketing you did not ask for.</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">4 · Processors</span>
+      <p class="p-body">Form submissions are handled by Formspree Inc. (USA), which forwards them to our email and is bound by the EU Standard Contractual Clauses. We routinely delete submissions from Formspree once actioned. Email correspondence is stored with our email provider for as long as the relationship is active plus any statutory period. The website is served by GitHub Pages (GitHub, Inc., USA). Transfers outside the EEA rely on the EU Standard Contractual Clauses and supplementary safeguards.</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">5 · Retention</span>
+      <p class="p-body">Form submissions: up to 12 months after last contact, unless a client relationship has started. Engagement data: the duration of the engagement plus 7 years under Swedish accounting law, or as specified in the Data Processing Agreement. Server logs: brief technical retention with our host. Newsletters and marketing lists: none, we do not operate any.</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">6 · Your rights</span>
+      <p class="p-body">You have the right of access, rectification, erasure, restriction, data portability and objection, and the right to withdraw consent. Email info@kifarkis.com and we respond within 30 days, free of charge for a first request. You may also lodge a complaint with the Swedish data protection authority, Integritetsskyddsmyndigheten (imy.se).</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">7 · Security and cookies</span>
+      <p class="p-body">We protect data with encryption in transit, access controls and working habits shaped by twenty-five years in IT security. If an incident puts your rights at risk, we notify the Swedish data protection authority within 72 hours and inform those affected without undue delay. This website sets no tracking cookies. The site and services are aimed at businesses, and we do not knowingly collect data about children under 16.</p>
+    </div>
+    <div class="sec reveal">
+      <span class="mlabel">8 · Changes and questions</span>
+      <p class="p-body">For material changes to this policy we notify active clients by email. If anything is unclear, email info@kifarkis.com with the subject line Privacy enquiry and we will gladly explain.</p>
+    </div>
+  </article>
+</main>
+
+<footer class="footer" id="footer">
+  <div class="meta">
+    <span>Kifarkis Design &amp; Automation</span>
+    <span class="sep full">·</span>
+    <span class="full">Design &amp; Animation i Vellinge AB</span>
+    <span class="sep full">·</span>
+    <span class="full">Vellinge, Sweden</span>
+    <span class="sep">·</span>
+    <a href="privacy-policy.html" style="color:inherit; text-decoration:none;">Privacy</a>
+  </div>
+  <a class="footer-link" href="home.html">← Back</a>
+</footer>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script>
+  // mobile menu
+  (function () {
+    var btn = document.getElementById('menuBtn');
+    var menu = document.getElementById('mobileMenu');
+    if (!btn || !menu) return;
+    function setOpen(open) {
+      btn.classList.toggle('open', open);
+      menu.classList.toggle('open', open);
+      document.body.classList.toggle('menu-open', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+    btn.addEventListener('click', function () { setOpen(!menu.classList.contains('open')); });
+    menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setOpen(false); }); });
+  })();
+
+  // header scrolled state
+  (function() {
+    const header = document.getElementById('header');
+    if (!header) return;
+    function update() { header.classList.toggle('scrolled', window.scrollY > 12); }
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+  })();
+
+  // mouse parallax + scroll drift (same loop as the homepage)
+  (function() {
+    const layers = document.querySelectorAll('.parallax');
+    if (!layers.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let mouseX = 0, mouseY = 0;
+    let targetX = 0, targetY = 0;
+
+    function tick() {
+      mouseX += (targetX - mouseX) * 0.05;
+      mouseY += (targetY - mouseY) * 0.05;
+      layers.forEach(el => {
+        const depth = parseFloat(el.dataset.depth || '1');
+        const sy = window.scrollY || window.pageYOffset || 0;
+        const x = mouseX * depth * -28;
+        const y = mouseY * depth * -28 + sy * depth * -0.045;
+        el.style.translate = x + 'px ' + y + 'px';
+      });
+      requestAnimationFrame(tick);
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      const w = window.innerWidth, h = window.innerHeight;
+      targetX = (e.clientX / w - 0.5) * 2;
+      targetY = (e.clientY / h - 0.5) * 2;
+    });
+    tick();
+  })();
+
+  // compact arrival: eyebrow -> title letters -> lede, with the glow warming in
+  (function() {
+    if (!window.gsap) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var eyebrow = document.querySelector('.arr-eyebrow');
+    var title = document.querySelector('.arr-title');
+    var lede = document.querySelector('.arr-lede');
+    var glow = document.querySelector('.arrival-glow');
+    if (!title) return;
+    // split title into word spans of letter spans (kerning-safe wrapping)
+    var words = title.textContent.split(' ');
+    title.textContent = '';
+    words.forEach(function (w, wi) {
+      var ws = document.createElement('span'); ws.className = 'aw';
+      for (var i = 0; i < w.length; i++) {
+        var ls = document.createElement('span'); ls.className = 'al';
+        ls.textContent = w[i]; ws.appendChild(ls);
+      }
+      title.appendChild(ws);
+      if (wi < words.length - 1) title.appendChild(document.createTextNode(' '));
+    });
+    var letters = title.querySelectorAll('.al');
+    var tl = gsap.timeline();
+    if (glow) tl.fromTo(glow, { opacity: 0 }, { opacity: 1, duration: 1.6, ease: 'power1.out' }, 0);
+    if (eyebrow) tl.fromTo(eyebrow, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }, 0);
+    tl.fromTo(letters, { y: '0.42em', opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.55, ease: 'power3.out', stagger: 0.022 }, 0.22);
+    if (lede) tl.fromTo(lede, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '-=0.3');
+    var first = document.querySelector('.s2 .reveal');
+    if (first) {
+      first.dataset.claimed = '1';
+      tl.fromTo(first, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '-=0.35');
+    }
+  })();
+
+  // scroll reveals (GSAP; content stays visible if GSAP is absent or reduced motion)
+  (function() {
+    if (!window.gsap || !window.ScrollTrigger) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.utils.toArray('.reveal').forEach(function (el) {
+      if (el.dataset.claimed) return;
+      gsap.fromTo(el, { y: 24, opacity: 0 }, {
+        y: 0, opacity: 1, duration: 0.9, ease: 'power2.out',
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' }
+      });
+    });
+  })();
+
+  // spine: direct, deterministic fill + dot (same approach as the homepage)
+  (function() {
+    const spine = document.querySelector('.spine');
+    const content = document.querySelector('.stage2 > .s2');
+    if (!spine || !content) return;
+    const fill = spine.querySelector('.spine-fill');
+    const dot = spine.querySelector('.spine-dot');
+    let topDoc = 0, bottomDoc = 0, railH = 0;
+    function measure() {
+      const sy = window.pageYOffset;
+      const r = content.getBoundingClientRect();
+      const hostEl = spine.offsetParent;
+      const host = hostEl ? hostEl.getBoundingClientRect() : { left: 0, top: -sy };
+      topDoc = r.top + sy; bottomDoc = r.bottom + sy;
+      railH = Math.max(0, bottomDoc - topDoc);
+      spine.style.left = (r.left - host.left - 26) + 'px';
+      spine.style.top = (r.top - host.top) + 'px';
+      spine.style.height = railH + 'px';
+    }
+    function progress() {
+      const vh = window.innerHeight;
+      const startS = topDoc - 0.68 * vh;
+      const endS = bottomDoc - vh;
+      const range = endS - startS;
+      if (range <= 0) return 1;
+      const p = (window.pageYOffset - startS) / range;
+      return p < 0 ? 0 : (p > 1 ? 1 : p);
+    }
+    let curr = 0, targ = 0, raf = null;
+    function render() {
+      curr += (targ - curr) * 0.14;
+      if (Math.abs(targ - curr) < 0.0006) curr = targ;
+      const h = railH * curr;
+      if (fill) fill.style.height = h + 'px';
+      if (dot) dot.style.top = h + 'px';
+      raf = (curr !== targ) ? requestAnimationFrame(render) : null;
+    }
+    function sync(re) {
+      if (re) measure();
+      targ = progress();
+      if (raf === null) raf = requestAnimationFrame(render);
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      measure();
+      if (fill) fill.style.height = railH + 'px';
+      if (dot) dot.style.top = railH + 'px';
+      return;
+    }
+    measure();
+    curr = targ = progress();
+    const h0 = railH * curr;
+    if (fill) fill.style.height = h0 + 'px';
+    if (dot) dot.style.top = h0 + 'px';
+    window.addEventListener('scroll', function () { sync(false); }, { passive: true });
+    let rt;
+    function onResize() { clearTimeout(rt); rt = setTimeout(function () { sync(true); }, 80); }
+    window.addEventListener('resize', onResize);
+    document.addEventListener('fullscreenchange', onResize);
+    if (window.ResizeObserver) { try { new ResizeObserver(onResize).observe(document.documentElement); } catch (e) {} }
+    window.addEventListener('load', function () { sync(true); });
+  })();
+</script>
+</body>
+</html>
