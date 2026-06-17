@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Improver &middot; Kifarkis Toolbox</title>
+<meta name="description" content="Turn a rough prompt into a structured, reusable one. A free tool from the Kifarkis Toolbox. Runs entirely in your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-6 0 56 56'%3E%3Cpath d='M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24' stroke='%2315120E' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Crect x='6' y='22' width='32' height='28' rx='2' fill='%239C4A2A'/%3E%3Ccircle cx='22' cy='34' r='2.2' fill='%23EFEAE0'/%3E%3Crect x='20.9' y='34' width='2.2' height='6' fill='%23EFEAE0'/%3E%3C/svg%3E">
+
+<!-- Self-hosted brand fonts, same as the rest of kifarkis.com. -->
+<link rel="stylesheet" href="fonts/fonts.css">
+
+<style>
+  :root{
+    /* ---- Locked Kifarkis brand tokens (kifarkis.com) ---- */
+    --bg:#EFEAE0;            /* cream */
+    --bg-warmer:#ECE5D3;     /* warm cream */
+    --bg-soft:#E8E2D3;       /* soft cream */
+    --panel:#EFEAE0;         /* panel surface — matches footer cream */
+    --panel-input:#F5F2EA;   /* input fields — slightly lighter, reads as inset */
+    --ink:#15120E;           /* deep ink */
+    --ink-soft:#4A4239;      /* body text */
+    --accent:#9C4A2A;        /* terracotta — the ONLY accent */
+    --accent-bright:#E88B6A; /* terracotta hover */
+    --muted:#7D7365;         /* muted text */
+    --rule:#D6CEC0;          /* borders */
+    --rule-light:#B5AC9F;    /* subtle borders */
+    --bg-soot:#C4BCB3;       /* soot field behind the cream */
+    --footer-h:56px;
+
+    /* Status colours kept inside the warm family — terracotta is the only true
+       accent; "strong" reads as a muted forest the cream supports, "weak" as the
+       terracotta itself so it never clashes. */
+    --ok:#5B6B3A;            /* strong / done — warm olive */
+    --ok-bg:#E9E7D3;
+    --warn:#9C4A2A;          /* could be clearer — terracotta */
+    --warn-bg:#EFE2D8;
+    --miss:#A6432E;          /* missing — deeper terracotta-red */
+    --miss-bg:#EEDCD4;
+
+    --radius:6px;            /* tight, editorial — not rounded-friendly */
+    --radius-sm:4px;
+    --shadow:0 1px 2px rgba(21,18,14,.04),0 8px 30px rgba(21,18,14,.06);
+    --ease:cubic-bezier(0.16,1,0.3,1);
+
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:'Instrument Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --serif:'Fraunces',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink-soft);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    padding-bottom:var(--footer-h);
+  }
+  ::selection{background:var(--accent);color:var(--bg)}
+
+  /* ═══ Soot field + grain (from kifarkis.com) ═══ */
+  .page-bg{position:fixed;inset:0;z-index:-2;pointer-events:none;background:var(--bg-soot)}
+  .grain{
+    position:fixed;inset:0;pointer-events:none;
+    opacity:0.20;mix-blend-mode:multiply;z-index:1;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* ═══ HEADER (locked, from kifarkis.com) ═══ */
+  .header{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    padding:8px clamp(20px,4vw,56px);
+    display:flex;align-items:center;justify-content:space-between;
+    transition:background-color 0.4s ease,backdrop-filter 0.4s ease,border-color 0.4s ease,padding 0.3s ease;
+    border-bottom:1px solid transparent;
+  }
+  /* Transparent at the top like the homepage; glass appears on scroll. */
+  .header.scrolled{
+    background-color:rgba(239,234,224,0.85);
+    backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-bottom-color:var(--rule);
+    padding:6px clamp(20px,4vw,56px);
+  }
+  .header-brand{display:flex;align-items:center;gap:18px;text-decoration:none;color:var(--ink);transition:opacity 0.2s ease}
+  .header-brand:hover{opacity:0.75}
+  .logo-mark{display:flex;align-items:stretch;gap:6px;line-height:0}
+  .logo-word{font-family:'Fraunces',serif;font-size:16px;font-weight:500;letter-spacing:0.02em;line-height:1;writing-mode:vertical-rl;transform:rotate(180deg);color:var(--ink);padding:1px 0;white-space:nowrap}
+  .logo-rule-stack{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .logo-lock{width:13px;height:16px;flex-shrink:0;color:var(--ink);display:block}
+  .logo-rule{width:1.5px;flex:1;background:var(--accent);min-height:12px}
+  .header-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink)}
+  @media (max-width:540px){.header-label{display:none}}
+  .header-nav{display:flex;gap:clamp(12px,2.5vw,28px);align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em}
+  .header-nav a{text-decoration:none;color:var(--ink);padding:6px 0;transition:color 0.2s ease}
+  .header-nav a:hover{color:var(--accent)}
+  .header-nav a.nav-active{color:var(--accent)}
+  .header-nav .lang{color:var(--rule-light);padding-left:clamp(6px,1.5vw,14px);border-left:1px solid var(--rule)}
+  .header-nav .lang a{color:var(--muted);text-decoration:none;transition:color 0.2s ease}
+  .header-nav .lang a:hover{color:var(--accent)}
+  .header-nav .lang a.active{color:var(--accent)}
+  @media (max-width:720px){.header-nav a:not(.lang){display:none}.header-nav .lang a{display:inline}}
+
+  /* mobile menu */
+  .menu-btn{display:none;background:none;border:none;cursor:pointer;padding:8px 0 8px 8px;z-index:70}
+  .menu-btn span{display:block;width:22px;height:1.5px;background:var(--ink);margin:5px 0;transition:transform 0.3s ease,opacity 0.3s ease}
+  .menu-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+  .menu-btn.open span:nth-child(2){opacity:0}
+  .menu-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+  @media (max-width:720px){.menu-btn{display:block}}
+  .mobile-menu{
+    position:fixed;inset:0;z-index:60;
+    background:rgba(196,188,179,0.96);
+    backdrop-filter:saturate(160%) blur(16px);
+    -webkit-backdrop-filter:saturate(160%) blur(16px);
+    display:flex;flex-direction:column;justify-content:center;
+    padding:0 clamp(28px,8vw,64px);
+    opacity:0;pointer-events:none;transition:opacity 0.35s ease;
+  }
+  .mobile-menu::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0.20;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+  .mobile-menu.open{opacity:1;pointer-events:auto}
+  .mm-link{font-family:'Fraunces',serif;font-size:clamp(1.2rem,4.8vw,1.55rem);color:var(--ink);text-decoration:none;padding:10px 0;display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--rule);position:relative;z-index:1}
+  .mm-link .idx{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.12em}
+  .mm-link.nav-active{color:var(--accent)}
+  .mm-lang{margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--rule-light);position:relative;z-index:1}
+  .mm-lang a{color:var(--muted);text-decoration:none}
+  .mm-lang a.active{color:var(--accent)}
+  body.menu-open{overflow:hidden}
+
+  /* ═══ FOOTER (locked, from kifarkis.com) ═══ */
+  .footer{
+    position:fixed;bottom:0;left:0;right:0;z-index:50;
+    height:var(--footer-h);
+    padding:0 clamp(20px,4vw,56px);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:rgba(239,234,224,0.85);
+    backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-top:1px solid var(--rule);
+  }
+  .footer .meta{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .footer .meta .sep{color:var(--rule-light);margin:0 6px}
+  .footer-link{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s ease;flex-shrink:0;cursor:pointer;background:none;border:none;padding:0}
+  .footer-link:hover{color:var(--accent)}
+  @media (max-width:720px){.footer .meta .full{display:none}}
+
+  /* ═══ Tool content wrap ═══ */
+  .wrap{
+    max-width:920px;margin:0 auto;position:relative;z-index:2;
+    padding:clamp(78px,11vh,104px) 22px calc(var(--footer-h) + 40px);
+  }
+
+  /* ---- Page title (Toolbox / Prompt Improver) ---- */
+  .page-head{margin-bottom:26px}
+  .breadcrumb{
+    font-family:var(--mono);font-size:10px;font-weight:500;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--accent);
+    display:flex;align-items:center;gap:9px;margin-bottom:14px;
+  }
+  .breadcrumb .crumb-sep{color:var(--rule-light)}
+  .breadcrumb .crumb-here{color:var(--muted)}
+  h1{
+    font-family:var(--serif);font-optical-sizing:auto;
+    font-weight:500;font-size:clamp(28px,4.2vw,44px);
+    margin:0;letter-spacing:-.02em;color:var(--ink);line-height:1.02;
+  }
+  .sub{color:var(--ink-soft);margin:14px 0 0;font-size:16px;max-width:62ch;line-height:1.55}
+
+  /* ---- Stepper ---- */
+  .stepper{display:flex;gap:7px;margin:22px 0 26px;flex-wrap:wrap}
+  .step{
+    display:flex;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+    background:transparent;border:1px solid var(--rule);
+    padding:8px 13px;border-radius:var(--radius);transition:.2s var(--ease);
+  }
+  .step .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:50%;
+    background:var(--bg-soft);color:var(--muted);font-size:10px;font-weight:700;
+  }
+  .step.active{color:var(--accent);border-color:var(--accent);background:var(--warn-bg)}
+  .step.active .num{background:var(--accent);color:var(--bg)}
+  .step.done{color:var(--ok);border-color:var(--rule-light)}
+  .step.done .num{background:var(--ok);color:var(--bg)}
+
+  /* ---- Panels ---- */
+  .panel{
+    background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px;margin-bottom:18px;position:relative;
+  }
+  .panel h2{
+    font-family:var(--serif);font-optical-sizing:auto;font-weight:500;
+    font-size:21px;margin:0 0 5px;color:var(--ink);letter-spacing:-.01em;
+  }
+  .panel .hint{color:var(--muted);font-size:14px;margin:0 0 16px;max-width:64ch}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+
+  label.field-label,.small-label{
+    display:block;font-family:var(--mono);font-weight:500;font-size:10.5px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+  }
+  textarea{
+    width:100%;font-family:var(--sans);font-size:15px;line-height:1.6;color:var(--ink);
+    border:1px solid var(--rule);border-radius:var(--radius-sm);padding:13px 15px;
+    resize:vertical;background:var(--panel-input);transition:.18s var(--ease);
+  }
+  textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(156,74,42,.12);background:var(--bg-warmer)}
+  textarea.mono{font-family:var(--mono);font-size:12.5px;line-height:1.55}
+
+  /* input meta row (count) */
+  .input-meta{display:flex;justify-content:flex-end;gap:14px;margin-top:7px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)}
+
+  /* ---- Buttons ---- */
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  button{
+    font-family:var(--mono);cursor:pointer;border-radius:var(--radius-sm);
+    font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+    border:1px solid transparent;padding:11px 18px;transition:.16s var(--ease);background:transparent;
+  }
+  button:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+  .btn-primary:hover{background:var(--ink);border-color:var(--ink)}
+  .btn-secondary{background:transparent;color:var(--ink);border-color:var(--rule-light)}
+  .btn-secondary:hover{border-color:var(--ink);background:var(--bg-soft)}
+  .btn-ghost{background:transparent;color:var(--accent);border-color:transparent;padding:11px 12px}
+  .btn-ghost:hover{color:var(--ink)}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-sm{padding:8px 13px;font-size:10px}
+
+  /* ---- Validation / notes ---- */
+  .validation,.note-inferred,.note-restored{
+    display:none;margin-top:14px;padding:11px 15px;border-radius:var(--radius-sm);
+    font-size:13.5px;line-height:1.5;border-left:3px solid var(--accent);
+  }
+  .validation{background:var(--warn-bg);color:var(--ink);border-left-color:var(--warn)}
+  .note-inferred{background:var(--bg-warmer);color:var(--ink-soft);border-left-color:var(--accent)}
+  .note-restored{background:var(--bg-warmer);color:var(--ink-soft);border-left-color:var(--rule-light);
+    display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .note-restored button{margin:0}
+
+  /* ---- Status badges ---- */
+  .statbadge{
+    font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;
+    text-transform:uppercase;padding:5px 11px;border-radius:999px;white-space:nowrap;
+  }
+  .sb-needs{background:var(--warn-bg);color:var(--accent)}
+  .sb-improved{background:var(--bg-soft);color:var(--ink)}
+  .sb-ready{background:var(--ok-bg);color:var(--ok)}
+
+  /* ---- Checklist ---- */
+  .checklist{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+  @media(max-width:620px){.checklist{grid-template-columns:1fr}}
+  .check-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 13px;border:1px solid var(--rule);border-radius:var(--radius-sm);background:var(--panel-input);
+  }
+  .check-item .name{font-size:14px;color:var(--ink-soft)}
+  .cbadge{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;
+    text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .cb-strong{background:var(--ok-bg);color:var(--ok)}
+  .cb-clear{background:var(--warn-bg);color:var(--warn)}
+  .cb-missing{background:var(--miss-bg);color:var(--miss)}
+
+  .score-row{display:flex;align-items:center;gap:14px;margin-top:18px}
+  .score-head{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+  .score-verdict{font-family:var(--serif);font-style:italic;font-weight:400;font-size:16px;color:var(--accent)}
+  .meter{flex:1;height:6px;border-radius:999px;background:var(--bg-soft);overflow:hidden}
+  .meter > i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .6s var(--ease)}
+
+  /* ---- What changed ---- */
+  ul.changes{margin:8px 0 0;padding:0;list-style:none}
+  ul.changes li{position:relative;padding:9px 0 9px 28px;font-size:14.5px;color:var(--ink-soft);border-bottom:1px solid var(--rule)}
+  ul.changes li:last-child{border-bottom:none}
+  ul.changes li::before{content:"*";position:absolute;left:4px;top:9px;color:var(--accent);
+    font-family:var(--serif);font-size:18px;line-height:1}
+
+  /* ---- Before / after diff ---- */
+  .diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:1180px){.diff-grid{grid-template-columns:1fr}}
+  .diff-col .small-label{display:flex;align-items:center;gap:8px}
+  .diff-col .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .dot-old{background:var(--rule-light)}
+  .dot-new{background:var(--accent)}
+  .diff-box{
+    font-family:var(--mono);font-size:12px;line-height:1.55;white-space:pre-wrap;
+    word-break:break-word;background:var(--panel-input);border:1px solid var(--rule);
+    border-radius:var(--radius-sm);padding:13px 15px;max-height:340px;overflow:auto;color:var(--ink-soft);
+  }
+  .diff-box.old{border-style:dashed}
+
+  /* ---- Refine questions ---- */
+  .qblock{margin-bottom:15px}
+  .qblock label{display:block;font-weight:600;font-size:14px;margin-bottom:6px;color:var(--ink)}
+  .qblock input{
+    width:100%;font-family:var(--sans);font-size:14px;border:1px solid var(--rule);
+    border-radius:var(--radius-sm);padding:11px 13px;background:var(--panel-input);transition:.18s var(--ease);
+  }
+  .qblock input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(156,74,42,.12);background:var(--bg-warmer)}
+
+  /* ---- Collapsible test ---- */
+  details.test{border:1px solid var(--rule);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow);overflow:hidden}
+  details.test > summary{
+    cursor:pointer;list-style:none;padding:20px 24px;
+    font-family:var(--serif);font-weight:500;font-size:19px;color:var(--ink);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  details.test > summary::-webkit-details-marker{display:none}
+  details.test > summary .chev{transition:.2s var(--ease);color:var(--muted);font-size:13px}
+  details.test[open] > summary .chev{transform:rotate(180deg)}
+  .test-body{padding:0 24px 24px;border-top:1px solid var(--rule)}
+  .test-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:620px){.test-grid{grid-template-columns:1fr}}
+
+  .hidden{display:none}
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:var(--radius-sm);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .tool-note{
+    color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+    text-align:center;margin-top:30px;line-height:1.7;
+  }
+  .tool-note .lock{display:inline-block;width:11px;height:13px;vertical-align:-2px;margin-right:6px}
+  .kbd{font-family:var(--mono);background:var(--bg-soft);border-radius:4px;padding:1px 6px;font-size:11px;color:var(--ink)}
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .meter > i{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="header" id="header">
+  <a href="home.html" class="header-brand" aria-label="Kifarkis Design & Automation">
+    <span class="logo-mark" aria-hidden="true">
+      <span class="logo-word">kifarkis</span>
+      <span class="logo-rule-stack">
+        <svg class="logo-lock" viewBox="0 0 44 56" aria-hidden="true">
+          <path d="M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="6" y="22" width="32" height="28" rx="2" fill="var(--accent)"/>
+          <circle cx="22" cy="34" r="2.2" fill="var(--bg)"/>
+          <rect x="20.9" y="34" width="2.2" height="6" fill="var(--bg)"/>
+        </svg>
+        <span class="logo-rule"></span>
+      </span>
+    </span>
+    <span class="header-label">Design &amp; Automation</span>
+  </a>
+  <nav class="header-nav">
+    <a href="automation.html">Automation</a>
+    <a href="web.html">Web</a>
+    <a href="work.html">Work</a>
+    <a href="about.html">About</a>
+    <a class="nav-active" href="toolbox.html">Toolbox</a>
+    <span class="lang"><a href="index.html">SV</a> / <a class="active" href="home.html">EN</a></span>
+  </nav>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a class="mm-link" href="automation.html"><span class="idx">01</span> Automation</a>
+  <a class="mm-link" href="web.html"><span class="idx">02</span> Web &amp; design</a>
+  <a class="mm-link" href="work.html"><span class="idx">03</span> Work</a>
+  <a class="mm-link" href="about.html"><span class="idx">04</span> About</a>
+  <a class="mm-link" href="contact.html"><span class="idx">05</span> Contact</a>
+  <a class="mm-link nav-active" href="toolbox.html"><span class="idx">06</span> Toolbox</a>
+  <p class="mm-lang"><a href="index.html">SV</a> / <a class="active" href="home.html">EN</a></p>
+</div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="breadcrumb">
+      <span class="crumb-root">Toolbox</span>
+      <span class="crumb-sep">/</span>
+      <span class="crumb-here">Prompt Improver</span>
+    </p>
+    <h1>Prompt Improver</h1>
+    <p class="sub">Turn a rough prompt into a structured, reusable one. Paste what you have, see what it's missing, and get a cleaner version back. Everything runs in your browser.</p>
+  </div>
+
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="paste"><span class="num">1</span>Paste</div>
+    <div class="step" data-step="analyze"><span class="num">2</span>Analyze</div>
+    <div class="step" data-step="improve"><span class="num">3</span>Improve</div>
+    <div class="step" data-step="refine"><span class="num">4</span>Refine</div>
+    <div class="step" data-step="test"><span class="num">5</span>Test</div>
+  </div>
+
+  <!-- STEP 1: PASTE -->
+  <section class="panel" id="panel-paste">
+    <div class="panel-head">
+      <div>
+        <h2>Paste your current prompt</h2>
+        <p class="hint">Use any prompt you already have. It can be rough, brief, disorganized, or incomplete. One input is all you need.</p>
+      </div>
+      <span class="statbadge sb-needs" id="liveBadge">Needs structure</span>
+    </div>
+    <textarea id="inputPrompt" rows="5" placeholder="e.g. Write a follow-up email after a sales call."></textarea>
+    <div class="input-meta"><span id="wordCount">0 words</span><span id="charCount">0 characters</span></div>
+    <div class="note-restored" id="restoredNote">
+      <span>Restored your last session.</span>
+      <button class="btn-ghost btn-sm" id="btnDismissRestore">Dismiss</button>
+    </div>
+    <div class="validation" id="validation"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnImprove">Improve my prompt</button>
+      <button class="btn-secondary" id="btnExample">Load example</button>
+      <button class="btn-ghost" id="btnReset">Reset</button>
+    </div>
+  </section>
+
+  <!-- STEP 2: ANALYSIS -->
+  <section class="panel hidden" id="panel-analysis">
+    <h2>Quick analysis</h2>
+    <p class="hint">A plain checklist of what your prompt already has, and what it's missing.</p>
+    <div class="checklist" id="checklist"></div>
+    <div class="score-row">
+      <span class="score-head" id="scoreText">Completeness</span>
+      <span class="meter"><i id="scoreBar" style="width:0%"></i></span>
+      <span class="score-verdict" id="scoreVerdict"></span>
+    </div>
+  </section>
+
+  <!-- STEP 3: IMPROVED -->
+  <section class="panel hidden" id="panel-improved">
+    <div class="panel-head">
+      <div>
+        <h2>Your improved prompt</h2>
+        <p class="hint">Fully editable. Tweak anything, then copy it into Claude.</p>
+      </div>
+      <span class="statbadge sb-improved" id="improvedBadge">Improved</span>
+    </div>
+    <textarea id="improvedPrompt" class="mono" rows="22"></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnCopyImproved">Copy improved prompt</button>
+      <button class="btn-secondary" id="btnCopyMd">Copy as Markdown</button>
+      <button class="btn-secondary" id="btnCopyXml">Copy as XML</button>
+      <button class="btn-ghost" id="btnResetImproved">Reset</button>
+    </div>
+  </section>
+
+  <!-- STEP 3b: BEFORE / AFTER -->
+  <section class="panel hidden" id="panel-diff">
+    <h2>Before and after</h2>
+    <p class="hint">Your original prompt beside the structured version, so you can see exactly what the framework added.</p>
+    <div class="diff-grid">
+      <div class="diff-col">
+        <p class="small-label"><span class="dot dot-old"></span>Original</p>
+        <div class="diff-box old" id="diffOld"></div>
+      </div>
+      <div class="diff-col">
+        <p class="small-label"><span class="dot dot-new"></span>Improved</p>
+        <div class="diff-box" id="diffNew"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4a: WHAT CHANGED -->
+  <section class="panel hidden" id="panel-changed">
+    <h2>What changed</h2>
+    <p class="hint">How the Kifarkis framework strengthened your prompt.</p>
+    <ul class="changes" id="changesList"></ul>
+  </section>
+
+  <!-- STEP 4b: MAKE IT BETTER -->
+  <section class="panel hidden" id="panel-refine">
+    <h2>Want to sharpen it further?</h2>
+    <p class="hint">Optional. Answer any of these and the prompt will update with your details.</p>
+    <div id="refineQuestions"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnRefine">Refine with my answers</button>
+    </div>
+  </section>
+
+  <!-- STEP 5: TEST (collapsed) -->
+  <details class="test hidden" id="panel-test">
+    <summary>Test old vs improved <span class="chev">▾</span></summary>
+    <div class="test-body">
+      <p class="hint" style="margin-top:16px">Optional. Run both prompts on the same scenario, then let a blind judge pick the winner.</p>
+
+      <label class="field-label">Test scenario</label>
+      <textarea id="testScenario" rows="3" placeholder="Describe a real situation to test against. e.g. Client: Acme Ltd, goal: cut onboarding time, concern: price, next step: pilot next week."></textarea>
+      <div class="btn-row">
+        <button class="btn-secondary btn-sm" id="btnCopyOldTest">Copy old prompt test</button>
+        <button class="btn-secondary btn-sm" id="btnCopyNewTest">Copy improved prompt test</button>
+      </div>
+
+      <div class="test-grid" style="margin-top:20px">
+        <div>
+          <p class="small-label">Output A</p>
+          <textarea id="outputA" rows="7" placeholder="Paste the result from one prompt here."></textarea>
+        </div>
+        <div>
+          <p class="small-label">Output B</p>
+          <textarea id="outputB" rows="7" placeholder="Paste the result from the other prompt here."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary btn-sm" id="btnCopyJudge" disabled>Copy blind judge prompt</button>
+      </div>
+      <p class="hint" id="judgeHint" style="margin-top:10px">Paste both outputs above to enable the blind judge prompt.</p>
+    </div>
+  </details>
+
+  <p class="tool-note">
+    <svg class="lock" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 14V9.5a7 7 0 0 1 14 0V14" stroke="#9C4A2A" stroke-width="3" stroke-linecap="round" fill="none"/><rect x="3" y="14" width="20" height="16" rx="3" fill="#9C4A2A"/><circle cx="13" cy="21" r="2.4" fill="#EFEAE0"/></svg>
+    Runs entirely in your browser. Nothing is sent anywhere.
+  </p>
+</div>
+
+<footer class="footer" id="footer">
+  <div class="meta">
+    <span>Kifarkis Design &amp; Automation</span>
+    <span class="sep full">·</span>
+    <span class="full">Design &amp; Animation i Vellinge AB</span>
+    <span class="sep full">·</span>
+    <span class="full">Vellinge, Sweden</span>
+    <span class="sep">·</span>
+    <a href="privacy-policy.html" style="color:inherit; text-decoration:none;">Privacy</a>
+  </div>
+  <button class="footer-link" id="backLink" aria-label="Back to top">↑ Back to top</button>
+</footer>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Kifarkis Prompt Improver — all logic runs locally.
+   ============================================================ */
+
+const EXAMPLE = "Write a follow-up email after a sales call.";
+const STORAGE_KEY = "kifarkis_prompt_improver_v1";
+
+const el = id => document.getElementById(id);
+const inputPrompt = el("inputPrompt");
+const improvedPrompt = el("improvedPrompt");
+
+let lastAnalysis = null;
+let baseImproved = "";
+let refineQuestionKeys = [];
+let saveTimer = null;
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg){
+  const t = el("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"),1500);
+}
+function copyText(text){
+  navigator.clipboard.writeText(text).then(()=>toast("Copied to clipboard")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);
+    ta.select();try{document.execCommand("copy");toast("Copied");}catch(e){toast("Copy failed");}
+    document.body.removeChild(ta);
+  });
+}
+
+/* ---------- localStorage persistence ---------- */
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      input: inputPrompt.value,
+      improved: improvedPrompt.value,
+      scenario: el("testScenario").value,
+      ts: Date.now()
+    }));
+  }catch(e){ /* storage unavailable — fail quietly */ }
+}
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveState,400); }
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const s = JSON.parse(raw);
+    if(!s || (!s.input && !s.improved)) return false;
+    inputPrompt.value = s.input || "";
+    el("testScenario").value = s.scenario || "";
+    if(s.improved){
+      improvedPrompt.value = s.improved;
+      // Re-run analysis so the panels match the restored improved prompt
+      if(inputPrompt.value.trim()){
+        runImprove(true);
+        improvedPrompt.value = s.improved; // keep the user's edited version
+        baseImproved = s.improved;
+        renderDiff();
+      }
+    }
+    updateCounts();
+    return true;
+  }catch(e){ return false; }
+}
+function clearState(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
+
+/* ---------- Word / character count + live badge ---------- */
+function updateCounts(){
+  const v = inputPrompt.value;
+  const words = v.trim() ? v.trim().split(/\s+/).filter(Boolean).length : 0;
+  el("wordCount").textContent = words + (words===1?" word":" words");
+  el("charCount").textContent = v.length + (v.length===1?" character":" characters");
+}
+
+/* ---------- Content-type detection ---------- */
+function detectType(p){
+  const t = p.toLowerCase();
+  const has = (...words)=>words.some(w=>t.includes(w));
+  if(has("email","e-mail","follow-up","follow up","reply","outreach","cold message")) return "email";
+  if(has("blog","article","post about","newsletter")) return "article";
+  if(has("social","tweet","linkedin","instagram","caption","x post")) return "social";
+  if(has("report","analysis","analyse","analyze","summary","summarise","summarize","brief")) return "report";
+  if(has("compare","comparison","versus"," vs ","pros and cons","options")) return "comparison";
+  if(has("plan","roadmap","strategy","steps to","checklist","process for")) return "plan";
+  if(has("code","function","script","python","javascript","sql","bug","refactor")) return "code";
+  if(has("translate","translation")) return "translation";
+  return "generic";
+}
+
+const TYPE_PROFILE = {
+  email: {
+    role:"a warm, concise communications writer who sounds like a trusted advisor rather than a pushy salesperson",
+    output:"Write one email of no more than 180 words. Include:\n- Subject line\n- Email body\n- Clear call to action",
+    inputs:["Recipient name: {recipient name}","Their goal: {goal}","Main concern or objection: {concern}","Agreed or desired next step: {next step}","Desired call to action: {CTA}"],
+    process:["Review the recipient's goal and concern","Summarize the conversation in plain language","Reassure without over-selling","Make the next step easy to say yes to"],
+    constraints:["Do not sound pushy.","Do not use generic sales language.","Do not invent details that were not provided."]
+  },
+  article: {
+    role:"an experienced content writer who turns ideas into clear, engaging articles",
+    output:"Write a structured article. Include:\n- A working headline\n- A short intro\n- 3–5 sections with subheadings\n- A brief closing takeaway",
+    inputs:["Topic: {topic}","Target reader: {target audience}","Key points to cover: {key points}","Desired word count: {desired word count}","Brand voice: {brand voice}"],
+    process:["Identify the core message for the reader","Outline the main sections","Draft clear, concrete prose","Tighten for flow and remove filler"],
+    constraints:["Do not pad with generic filler.","Do not fabricate statistics or quotes.","Do not use vague language."]
+  },
+  social: {
+    role:"a sharp social media copywriter who writes scroll-stopping, on-brand posts",
+    output:"Return 3 post variations. For each:\n- The post text\n- A suggested hook line\n- 2–4 relevant hashtags",
+    inputs:["Platform: {platform}","Topic or offer: {topic}","Target audience: {target audience}","Brand voice: {brand voice}","Call to action: {CTA}"],
+    process:["Identify the single idea worth posting","Write a strong opening hook","Keep it concise and platform-appropriate","Add a clear call to action"],
+    constraints:["Do not be vague or generic.","Do not over-use hashtags or emojis.","Do not exceed the platform's natural length."]
+  },
+  report: {
+    role:"a precise analyst who turns raw material into a clear, decision-ready summary",
+    output:"Return a brief report with:\n- A one-line headline finding\n- Key points as a short bulleted list\n- A clear recommendation",
+    inputs:["Source material: {source material}","Audience: {target audience}","Decision to support: {decision}","Desired length: {desired length}"],
+    process:["Review the source material","Extract the most important findings","Synthesize them into clear points","Recommend a concrete next action"],
+    constraints:["Do not fabricate facts or figures.","Do not bury the conclusion.","Do not use vague or filler language."]
+  },
+  comparison: {
+    role:"an impartial analyst who lays out options clearly so a reader can decide",
+    output:"Return a comparison table with one row per option and columns for the key criteria, followed by a one-line recommendation.",
+    inputs:["Options to compare: {options}","Criteria that matter: {criteria}","Audience: {target audience}","Constraints or budget: {constraints}"],
+    process:["Identify the options and the criteria that matter","Compare each option against each criterion","Note key trade-offs","Recommend a default choice with reasoning"],
+    constraints:["Do not invent capabilities an option lacks.","Do not hide trade-offs.","Do not be vague."]
+  },
+  plan: {
+    role:"a pragmatic strategist who turns goals into clear, ordered action steps",
+    output:"Return a step-by-step plan. For each step:\n- What to do\n- Who or what is needed\n- A rough timeframe",
+    inputs:["Goal: {goal}","Current situation: {context}","Constraints (time, budget, people): {constraints}","Deadline: {deadline}"],
+    process:["Clarify the goal and the finish line","Break the work into ordered steps","Identify dependencies and risks","Recommend where to start first"],
+    constraints:["Do not over-complicate the plan.","Do not skip dependencies.","Do not assume resources that were not mentioned."]
+  },
+  code: {
+    role:"a senior software engineer who writes clean, correct, well-commented code",
+    output:"Return:\n- The complete code in a single block\n- A short explanation of how it works\n- Any assumptions you made",
+    inputs:["Language / stack: {language}","What it should do: {requirement}","Inputs and outputs: {io}","Constraints (performance, style): {constraints}"],
+    process:["Review the requirement and edge cases","Identify the cleanest approach","Write the code with clear names and comments","Note assumptions and how to test it"],
+    constraints:["Do not invent library APIs that may not exist.","Do not skip error handling.","Do not leave the requirement half-met."]
+  },
+  translation: {
+    role:"a fluent translator who preserves meaning, tone, and nuance",
+    output:"Return the translated text only, matching the original formatting, followed by any notes on choices that were ambiguous.",
+    inputs:["Source text: {source text}","Source language: {source language}","Target language: {target language}","Tone to preserve: {tone}"],
+    process:["Read the full source for meaning and tone","Translate naturally, not word-for-word","Preserve formatting and intent","Flag anything ambiguous"],
+    constraints:["Do not add or remove meaning.","Do not translate literally where it sounds unnatural.","Do not skip culturally specific nuance."]
+  },
+  generic: {
+    role:"an expert assistant who produces clear, specific, ready-to-use results",
+    output:"Return a clear, well-structured response in the most useful format for the task (e.g. a short report, list, or draft).",
+    inputs:["Main subject: {subject}","Audience: {target audience}","Key details: {details}","Desired format: {desired format}"],
+    process:["Review the request and its goal","Identify what a strong result must include","Draft a clear, concrete response","Tighten and remove anything generic"],
+    constraints:["Do not fabricate facts.","Do not use vague or filler language.","Do not over-complicate the response."]
+  }
+};
+
+const TASK_VERBS = ["write","create","draft","summarize","summarise","analyze","analyse","compare","review","improve","rewrite","generate","explain","plan","translate","design","build","outline","list","describe","evaluate","recommend"];
+
+/* ============================================================
+   Input extraction — pull real signal out of the raw prompt so
+   the improved version reflects what the user actually wrote,
+   instead of discarding it for generic placeholders.
+   ============================================================ */
+
+// Descriptive words worth carrying into the prompt (tone / quality / audience cues)
+const DESCRIPTOR_WORDS = ["formal","informal","casual","friendly","warm","professional","concise",
+  "short","brief","detailed","thorough","persuasive","technical","simple","plain","polite",
+  "confident","honest","clear","direct","hesitant","skeptical","sceptical","reluctant","busy",
+  "senior","junior","experienced","new","urgent","gentle","empathetic","bold","witty","playful"];
+
+const AUDIENCE_WORDS = ["manager","client","customer","prospect","investor","ceo","cfo","cto","team",
+  "developer","engineer","beginner","expert","student","reader","user","stakeholder","board",
+  "recruiter","candidate","patient","doctor","scientist","founder","partner","vendor","supplier",
+  "lead","executive","colleague","subscriber","follower","audience"];
+
+const STOPISH = new Set(["the","a","an","to","for","of","and","or","with","about","after","before",
+  "that","this","please","write","create","draft","make","give","need","want","help","me","my",
+  "your","our","it","is","are","be","on","in","at","as","by","from","into","some","any"]);
+
+function extractSignal(raw){
+  const sig = { entities:[], quoted:[], descriptors:[], audience:[], numbers:[], keywords:[] };
+  const text = raw.trim();
+  if(!text) return sig;
+  const lower = text.toLowerCase();
+
+  // Quoted phrases — strong signal of exact content the user cares about
+  const qmatch = text.match(/["“']([^"”']{2,60})["”']/g);
+  if(qmatch) sig.quoted = qmatch.map(q=>q.replace(/["“”']/g,"").trim()).filter(Boolean).slice(0,4);
+
+  // Capitalised multi/single words that aren't sentence-starts → likely names/brands
+  const tokens = text.split(/\s+/);
+  tokens.forEach((tok,i)=>{
+    const clean = tok.replace(/[^A-Za-z0-9&.\-]/g,"");
+    if(!clean) return;
+    const isCap = /^[A-Z][A-Za-z0-9&.\-]+$/.test(clean);
+    const startsSentence = i===0 || /[.!?]$/.test(tokens[i-1]||"");
+    if(isCap && !startsSentence && clean.length>1 && !DESCRIPTOR_WORDS.includes(clean.toLowerCase())){
+      sig.entities.push(clean);
+    }
+  });
+  sig.entities = [...new Set(sig.entities)].slice(0,6);
+
+  // Descriptors the user actually used
+  sig.descriptors = DESCRIPTOR_WORDS.filter(w=>new RegExp("\\b"+w+"\\b").test(lower));
+  // Audience words the user actually used
+  sig.audience = AUDIENCE_WORDS.filter(w=>new RegExp("\\b"+w+"\\b").test(lower));
+
+  // Numbers and limits (e.g. "200 words", "3 options", "under 5 minutes")
+  const nums = text.match(/\b(?:under|over|no more than|at least|about|around|up to|max|min)?\s?\d+\s?(?:words?|characters?|chars?|options?|points?|steps?|sentences?|paragraphs?|minutes?|min|pages?|items?|bullets?|%|percent|kr|sek|usd|eur)\b/gi);
+  if(nums) sig.numbers = [...new Set(nums.map(n=>n.trim()))].slice(0,5);
+
+  // Content keywords — meaningful nouns left after removing stopish + verbs + descriptors
+  const seen = new Set();
+  tokens.forEach(tok=>{
+    const w = tok.toLowerCase().replace(/[^a-z0-9\-]/g,"");
+    if(w.length<4) return;
+    if(STOPISH.has(w) || TASK_VERBS.includes(w) || DESCRIPTOR_WORDS.includes(w) || AUDIENCE_WORDS.includes(w)) return;
+    if(seen.has(w)) return;
+    seen.add(w); sig.keywords.push(w);
+  });
+  sig.keywords = sig.keywords.slice(0,8);
+
+  return sig;
+}
+
+/* ---------- Analysis ---------- */
+const CRITERIA = [
+  {key:"task",   name:"Clear task definition"},
+  {key:"role",   name:"Expert role"},
+  {key:"purpose",name:"Specific purpose"},
+  {key:"audience",name:"Audience or end user"},
+  {key:"inputs", name:"Input placeholders"},
+  {key:"format", name:"Output format"},
+  {key:"tone",   name:"Tone and style"},
+  {key:"process",name:"Step-by-step process"},
+  {key:"constraints",name:"Constraints and exclusions"},
+  {key:"examples",name:"Examples or reference output"},
+  {key:"complete",name:"Overall completeness"}
+];
+
+// Helper: count how many distinct cues from a list appear, with word boundaries
+function cueHits(t, arr){
+  let n=0; for(const w of arr){ if(new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b").test(t)) n++; }
+  return n;
+}
+
+function analyze(p){
+  const t = p.toLowerCase();
+  const words = p.trim().split(/\s+/).filter(Boolean);
+  const wc = words.length;
+  const has = (...arr)=>arr.some(w=>t.includes(w));
+  const r = {};
+
+  // task — needs a real task verb; "strong" only when there's enough around it
+  const hasVerb = TASK_VERBS.some(v=>new RegExp("\\b"+v+"\\b").test(t));
+  if(hasVerb) r.task = wc>=10 ? "strong" : "clear";
+  else r.task = wc>=12 ? "clear" : "missing";
+
+  // role — explicit role framing only
+  if(/\b(you are|act as|as an? expert|you're an?|in the role of)\b/.test(t) || /\bexpert\b/.test(t) || /\bspecialist\b/.test(t)) r.role="strong";
+  else r.role="missing";
+
+  // purpose / why — needs an actual purpose connector, not just length
+  if(/\b(so that|in order to|to help|because|the goal|the purpose|so they|so the|aimed at|intended to)\b/.test(t)) r.purpose="strong";
+  else r.purpose = wc>=25 ? "clear" : "missing";
+
+  // audience — require a genuine audience cue; one stray word = "clear", two+ = "strong"
+  const audHits = cueHits(t, AUDIENCE_WORDS.concat(["audience","for a ","for an ","for the "]));
+  r.audience = audHits>=2 ? "strong" : audHits===1 ? "clear" : "missing";
+
+  // input placeholders — explicit braces are strong; "based on X" phrasing is clear
+  if(/[\{\[][^\}\]]+[\}\]]/.test(p)) r.inputs="strong";
+  else if(/\b(use the following|based on|using the|details:|here is|here's the|given the)\b/.test(t)) r.inputs="clear";
+  else r.inputs="missing";
+
+  // output format — needs a real format noun; require 1 strong cue, 2+ = strong
+  const fmtHits = cueHits(t, ["format","bullet","bullets","list","table","paragraph","paragraphs","steps","subject line","heading","headings","section","sections","json","markdown","checklist","outline","summary"]);
+  const fmtLen = /\b\d+\s?(words?|characters?|sentences?|paragraphs?|bullets?)\b/.test(t);
+  if(fmtHits>=2 || (fmtHits>=1 && fmtLen)) r.format="strong";
+  else if(fmtHits>=1 || fmtLen) r.format="clear";
+  else r.format="missing";
+
+  // tone — require an actual tone/descriptor word
+  const toneHits = cueHits(t, ["tone","style","voice"].concat(DESCRIPTOR_WORDS));
+  r.tone = toneHits>=2 ? "strong" : toneHits===1 ? "clear" : "missing";
+
+  // process steps — explicit sequence markers
+  if(/\b(step|steps|first,|then |next,|finally|1\.|2\.)\b/.test(t) || /(^|\n)\s*-\s+/.test(p)) r.process="strong";
+  else r.process = wc>=35 ? "clear" : "missing";
+
+  // constraints — explicit exclusion/limit language
+  const conHits = cueHits(t, ["don't","do not","avoid","must not","never","without","exclude","only","no more than","at least","limit"]);
+  r.constraints = conHits>=2 ? "strong" : conHits===1 ? "clear" : "missing";
+
+  // examples
+  if(/\b(example|e\.g\.|for instance|like this|sample|reference|such as)\b/.test(t)) r.examples="strong";
+  else r.examples="missing";
+
+  // completeness from weighted score
+  const vals = ["task","role","purpose","audience","inputs","format","tone","process","constraints","examples"];
+  const pts = vals.reduce((s,k)=> s + (r[k]==="strong"?1:r[k]==="clear"?0.5:0),0);
+  const pct = Math.round((pts/vals.length)*100);
+  r.complete = pct>=70 ? "strong" : pct>=40 ? "clear" : "missing";
+  r._pct = pct;
+  return r;
+}
+
+function badgeFor(status){
+  if(status==="strong") return {cls:"cb-strong",label:"Strong"};
+  if(status==="clear")  return {cls:"cb-clear", label:"Could be clearer"};
+  return {cls:"cb-missing",label:"Missing"};
+}
+
+function verdictFor(pct){
+  if(pct>=70) return "Strong prompt";
+  if(pct>=40) return "Getting there";
+  return "Needs structure";
+}
+
+function renderChecklist(a){
+  const wrap = el("checklist"); wrap.innerHTML="";
+  CRITERIA.forEach(c=>{
+    const b = badgeFor(a[c.key]||"missing");
+    const div = document.createElement("div");
+    div.className="check-item";
+    div.innerHTML = `<span class="name">${c.name}</span><span class="cbadge ${b.cls}">${b.label}</span>`;
+    wrap.appendChild(div);
+  });
+  el("scoreBar").style.width = a._pct + "%";
+  el("scoreText").textContent = "Completeness — " + a._pct + "%";
+  el("scoreVerdict").textContent = verdictFor(a._pct);
+}
+
+/* ---------- Build improved prompt ---------- */
+function titleCase(s){ s=s.trim(); return s.charAt(0).toUpperCase()+s.slice(1); }
+
+function deriveTask(p){
+  let s = p.trim().replace(/\s+/g," ");
+  if(!s) return "Complete the task described above.";
+  if(!/[.!?]$/.test(s)) s += ".";
+  return titleCase(s);
+}
+
+// Build a context line that reflects the extracted signal
+function buildContextFromSignal(raw, sig){
+  const core = raw.trim().replace(/[.\s]+$/,"");
+  let lines = [`This prompt should produce a result that directly serves the request: "${core}".`];
+
+  if(sig.entities.length){
+    lines.push(`Keep these specifics from the request accurate and central: ${sig.entities.join(", ")}.`);
+  }
+  if(sig.quoted.length){
+    lines.push(`Honour the exact wording the user flagged: ${sig.quoted.map(q=>`"${q}"`).join(", ")}.`);
+  }
+  if(sig.numbers.length){
+    lines.push(`Respect the stated limits: ${sig.numbers.join(", ")}.`);
+  }
+  lines.push("Where a detail below is unknown, fill in the placeholder. Adjust anything that does not fit.");
+  return lines.join(" ");
+}
+
+function buildImproved(rawPrompt, analysis, answers){
+  answers = answers || {};
+  const type = detectType(rawPrompt);
+  const sig = extractSignal(rawPrompt);
+
+  const isCanonical = rawPrompt.trim().toLowerCase().replace(/[.\s]+$/,"") ===
+                      "write a follow-up email after a sales call";
+
+  let prof = JSON.parse(JSON.stringify(TYPE_PROFILE[type]));
+  let role = prof.role;
+  let task = deriveTask(rawPrompt);
+  let context, inputs, process, output, quality, constraints;
+
+  if(isCanonical){
+    role = "a warm, concise sales follow-up writer who sounds like a trusted advisor rather than a pushy salesperson";
+    task = "Write a follow-up email to send after a sales call.";
+    context = "The email should remind the client of their goal, summarize the agreed next step, address one likely concern, and close with a clear call to action.";
+    inputs = ["Client name: {client name}","Client goal: {client goal}","Main concern or objection: {concern}","Agreed next step: {next step}","Desired call to action: {CTA}"];
+    process = ["Review the client goal and concern","Summarize the conversation in plain language","Reassure the client without over-selling","Make the next step easy to say yes to"];
+    output = "Write one email of no more than 180 words. Include:\n- Subject line\n- Email body\n- Clear call to action";
+    quality = "The email should be warm, specific, concise, and ready to send.";
+    constraints = ["Do not sound pushy.","Do not use generic sales language.","Do not invent details that were not provided."];
+  } else {
+    context = buildContextFromSignal(rawPrompt, sig);
+    inputs = prof.inputs.slice();
+
+    // Seed the first input ONLY when it's genuinely a topic/subject slot
+    // (not a name, recipient, or source field, where keyword lists make no sense).
+    const subjectBits = sig.keywords.slice(0,4).join(", ");
+    const firstLabel = (inputs[0]||"").toLowerCase();
+    const isTopicSlot = /\b(topic|subject|main subject|what it should|requirement|options|goal)\b/.test(firstLabel);
+    if(subjectBits && isTopicSlot){
+      inputs = inputs.slice();
+      inputs[0] = inputs[0].replace(/\{[^}]+\}/, subjectBits);
+    }
+    // If the user named entities, add a concrete "Specifics" input
+    if(sig.entities.length || sig.quoted.length){
+      const specifics = [...sig.entities, ...sig.quoted.map(q=>`"${q}"`)].join(", ");
+      inputs.push("Specifics to include: " + specifics);
+    }
+
+    process = prof.process.slice();
+    output = prof.output;
+
+    // Fold any stated numeric limit into the output format
+    if(sig.numbers.length){
+      output = output + "\nRespect these limits: " + sig.numbers.join(", ") + ".";
+    }
+
+    quality = "A strong answer is specific and concrete, written in plain language, concise, and ready to use as-is with clear next steps.";
+    constraints = prof.constraints.slice();
+
+    // Use descriptors the user already gave as tone, so we don't ignore them
+    const toneWords = sig.descriptors.filter(d=>!["short","brief","detailed","thorough"].includes(d));
+    if(toneWords.length && !answers.tone){
+      role = role + ", writing in a " + toneWords.slice(0,3).join(", ") + " register";
+    }
+    // Audience the user already named
+    if(sig.audience.length && !answers.audience){
+      context += "\n\nIntended audience: " + sig.audience.slice(0,3).join(", ") + ".";
+    }
+  }
+
+  // Apply refine answers (override inferred defaults)
+  if(answers.audience){
+    context += "\n\nIntended audience: " + answers.audience + ".";
+  }
+  if(answers.format){
+    output = answers.format + (/[.!?]$/.test(answers.format)?"":".");
+  }
+  if(answers.tone){
+    role = role + ", writing in a " + answers.tone.replace(/[.\s]+$/,"") + " tone";
+  }
+  if(answers.avoid){
+    constraints = constraints.concat("Avoid: " + answers.avoid.replace(/[.\s]+$/,"") + ".");
+  }
+  if(answers.example){
+    answers._exampleText = answers.example;
+  }
+
+  const ex1 = (answers._exampleText) ? answers._exampleText : "Paste an example of a strong output here.";
+
+  const md =
+`## Role
+You are ${role}.
+
+## Task
+${task}
+
+## Context
+${context}
+
+## Input
+Use the following details:
+${inputs.map(i=>"- "+i).join("\n")}
+
+## Process
+${process.map(s=>"- "+s).join("\n")}
+
+## Output Format
+${output}
+
+## Quality Bar
+${quality}
+
+## Constraints
+${constraints.map(c=>"- "+c).join("\n")}
+
+## Optional Examples
+<examples>
+<example1>
+${ex1}
+</example1>
+<example2>
+Paste another example here.
+</example2>
+</examples>`;
+
+  return md;
+}
+
+/* ---------- Markdown -> XML conversion (for "Copy as XML") ---------- */
+function improvedToXml(md){
+  // Split on "## Heading" blocks and wrap each in a tag
+  const lines = md.split("\n");
+  const sections = [];
+  let cur = null;
+  for(const ln of lines){
+    const m = ln.match(/^##\s+(.+)$/);
+    if(m){ cur = {tag:m[1].trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,""), body:[]}; sections.push(cur); }
+    else if(cur){ cur.body.push(ln); }
+  }
+  let out = "<prompt>\n";
+  for(const s of sections){
+    let body = s.body.join("\n").trim();
+    // The examples section already contains XML — keep it inline, unwrapped
+    if(s.tag==="optional_examples"){ out += body + "\n"; continue; }
+    out += `  <${s.tag}>\n${body.split("\n").map(l=>"    "+l).join("\n")}\n  </${s.tag}>\n`;
+  }
+  out += "</prompt>";
+  return out;
+}
+
+/* ---------- Before / after diff ---------- */
+function renderDiff(){
+  el("diffOld").textContent = inputPrompt.value.trim() || "(empty)";
+  el("diffNew").textContent = improvedPrompt.value.trim() || "(empty)";
+}
+
+/* ---------- What changed ---------- */
+function buildChanges(a, sig){
+  const out = [];
+  if(sig && (sig.entities.length || sig.quoted.length || sig.keywords.length)){
+    out.push("Carried your own specifics into the prompt instead of generic placeholders");
+  }
+  if(a.role!=="strong") out.push("Assigned an expert role so the AI adopts the right perspective");
+  if(a.task!=="strong") out.push("Converted a vague task into specific, ordered action steps");
+  if(a.inputs!=="strong") out.push("Added reusable placeholders so the prompt works across situations");
+  if(a.format!=="strong") out.push("Defined output rules so the response returns in the correct format");
+  if(a.constraints!=="strong") out.push("Added constraints to reduce generic or risky answers");
+  if(a.examples!=="strong") out.push("Added an examples slot so you can show the AI exactly what good looks like");
+  const fillers = [
+    "Gave the prompt a clear structure that's easy to reuse and edit",
+    "Set a quality bar so the AI knows what a strong answer must include",
+    "Separated inputs from instructions so it's easy to swap in new details"
+  ];
+  let i=0;
+  while(out.length<4 && i<fillers.length){ if(!out.includes(fillers[i])) out.push(fillers[i]); i++; }
+  return out.slice(0,6);
+}
+
+/* ---------- Refine questions ---------- */
+const QUESTION_BANK = {
+  audience:"Who is the intended audience for this output?",
+  format:"What format should the result take? (e.g. email, list, table, report)",
+  tone:"What tone and style should it use? (e.g. warm, formal, concise)",
+  avoid:"What should the AI explicitly avoid?",
+  example:"Do you have an example of a strong result to model? Paste it here."
+};
+const QUESTION_ORDER = ["audience","format","tone","avoid","example"];
+
+function buildRefineQuestions(a){
+  const priority = [
+    ["audience", a.audience],
+    ["format",   a.format],
+    ["tone",     a.tone],
+    ["avoid",    a.constraints],
+    ["example",  a.examples]
+  ];
+  const weak = priority.filter(([k,v])=>v!=="strong").map(([k])=>k);
+  let chosen = weak.slice(0,3);
+  for(const k of QUESTION_ORDER){ if(chosen.length>=3) break; if(!chosen.includes(k)) chosen.push(k); }
+  refineQuestionKeys = chosen;
+
+  const wrap = el("refineQuestions"); wrap.innerHTML="";
+  chosen.forEach(k=>{
+    const div=document.createElement("div");
+    div.className="qblock";
+    div.innerHTML = `<label for="ans_${k}">${QUESTION_BANK[k]}</label><input type="text" id="ans_${k}" autocomplete="off" placeholder="Optional">`;
+    wrap.appendChild(div);
+  });
+}
+
+function collectAnswers(){
+  const ans={};
+  refineQuestionKeys.forEach(k=>{
+    const f = el("ans_"+k);
+    if(f && f.value.trim()) ans[k]=f.value.trim();
+  });
+  return ans;
+}
+
+/* ---------- Test prompts ---------- */
+function oldTestPrompt(){
+  const scenario = el("testScenario").value.trim();
+  return inputPrompt.value.trim() + (scenario? "\n\n--- Apply to this scenario ---\n"+scenario : "");
+}
+function newTestPrompt(){
+  const scenario = el("testScenario").value.trim();
+  return improvedPrompt.value.trim() + (scenario? "\n\n--- Apply to this scenario ---\n"+scenario : "");
+}
+function judgePrompt(){
+  const a = el("outputA").value.trim();
+  const b = el("outputB").value.trim();
+  return `You are an impartial judge evaluating two AI outputs. You do not know which prompt produced which output — judge only on quality.
+
+Score each output (1–5) on these dimensions:
+- Goal achievement
+- Specificity
+- Clarity
+- Usefulness
+- Format fit
+- Ready-to-use quality
+
+--- OUTPUT A ---
+${a}
+
+--- OUTPUT B ---
+${b}
+
+Return:
+1. Winner (A or B)
+2. Why it won
+3. What specifically improved between them
+4. What still needs work
+5. A recommendation: should the user adopt the winning version now, or refine it again?
+
+Be concrete and concise.`;
+}
+
+/* ---------- Stepper ---------- */
+function setStep(active, done){
+  done = done || [];
+  document.querySelectorAll(".step").forEach(s=>{
+    const k = s.dataset.step;
+    s.classList.toggle("active", k===active);
+    s.classList.toggle("done", done.includes(k));
+  });
+}
+
+/* ---------- Validation ---------- */
+function showValidation(msg){ const v=el("validation"); v.textContent=msg; v.style.display="block"; }
+function hideValidation(){ el("validation").style.display="none"; }
+
+/* ---------- Main: Improve ---------- */
+function runImprove(silent){
+  const raw = inputPrompt.value.trim();
+  if(!raw){
+    showValidation("Paste a prompt first, then the Prompt Improver can refine it.");
+    return;
+  }
+  hideValidation();
+  const a = analyze(raw);
+  lastAnalysis = a;
+  const sig = extractSignal(raw);
+
+  renderChecklist(a);
+
+  baseImproved = buildImproved(raw, a, {});
+  improvedPrompt.value = baseImproved;
+
+  const changes = buildChanges(a, sig);
+  const cl = el("changesList"); cl.innerHTML="";
+  changes.forEach(c=>{ const li=document.createElement("li"); li.textContent=c; cl.appendChild(li); });
+
+  buildRefineQuestions(a);
+  renderDiff();
+
+  ["panel-analysis","panel-improved","panel-diff","panel-changed","panel-refine"].forEach(id=>el(id).classList.remove("hidden"));
+  el("panel-test").classList.remove("hidden");
+
+  el("liveBadge").className="statbadge sb-improved"; el("liveBadge").textContent="Improved";
+
+  const wc = raw.split(/\s+/).filter(Boolean).length;
+  if(wc < 8){
+    showInferredNote("Your prompt was short, so some details were inferred. Check the placeholders and adjust anything that doesn't fit.");
+  } else {
+    hideInferredNote();
+  }
+
+  setStep("improve",["paste","analyze"]);
+  saveState();
+  if(!silent) el("panel-analysis").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function showInferredNote(msg){
+  let n = el("inferredNote");
+  if(!n){
+    n=document.createElement("div");
+    n.id="inferredNote"; n.className="note-inferred"; n.style.display="block";
+    el("panel-improved").querySelector("textarea").insertAdjacentElement("afterend", n);
+  }
+  n.textContent = msg; n.style.display="block";
+}
+function hideInferredNote(){ const n=el("inferredNote"); if(n) n.style.display="none"; }
+
+/* ---------- Refine ---------- */
+function runRefine(){
+  if(!lastAnalysis) return;
+  const ans = collectAnswers();
+  const raw = inputPrompt.value.trim();
+  baseImproved = buildImproved(raw, lastAnalysis, ans);
+  improvedPrompt.value = baseImproved;
+  renderDiff();
+  setStep("refine",["paste","analyze","improve"]);
+  saveState();
+  toast("Improved prompt updated");
+  el("panel-improved").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ---------- Reset ---------- */
+function fullReset(){
+  inputPrompt.value="";
+  improvedPrompt.value="";
+  el("testScenario").value=""; el("outputA").value=""; el("outputB").value="";
+  el("refineQuestions").innerHTML="";
+  el("checklist").innerHTML="";
+  el("changesList").innerHTML="";
+  hideValidation(); hideInferredNote();
+  el("restoredNote").style.display="none";
+  lastAnalysis=null; baseImproved="";
+  ["panel-analysis","panel-improved","panel-diff","panel-changed","panel-refine","panel-test"].forEach(id=>el(id).classList.add("hidden"));
+  el("liveBadge").className="statbadge sb-needs"; el("liveBadge").textContent="Needs structure";
+  updateJudgeBtn();
+  updateCounts();
+  clearState();
+  setStep("paste");
+  el("panel-paste").scrollIntoView({behavior:"smooth",block:"start"});
+  inputPrompt.focus();
+}
+
+/* ---------- Judge button enable/disable ---------- */
+function updateJudgeBtn(){
+  const ready = el("outputA").value.trim() && el("outputB").value.trim();
+  el("btnCopyJudge").disabled = !ready;
+  el("judgeHint").textContent = ready
+    ? "Ready — copy the blind judge prompt and paste it into Claude."
+    : "Paste both outputs above to enable the blind judge prompt.";
+}
+
+/* ---------- Events ---------- */
+inputPrompt.addEventListener("input", ()=>{
+  hideValidation();
+  updateCounts();
+  const v = inputPrompt.value.trim();
+  const lb = el("liveBadge");
+  if(!v){ lb.className="statbadge sb-needs"; lb.textContent="Needs structure"; }
+  queueSave();
+});
+improvedPrompt.addEventListener("input", queueSave);
+el("testScenario").addEventListener("input", queueSave);
+el("outputA").addEventListener("input", updateJudgeBtn);
+el("outputB").addEventListener("input", updateJudgeBtn);
+
+el("btnImprove").addEventListener("click", ()=>runImprove(false));
+el("btnExample").addEventListener("click", ()=>{ inputPrompt.value=EXAMPLE; hideValidation(); updateCounts(); inputPrompt.focus(); queueSave(); });
+el("btnReset").addEventListener("click", fullReset);
+el("btnResetImproved").addEventListener("click", fullReset);
+el("btnDismissRestore").addEventListener("click", ()=>{ el("restoredNote").style.display="none"; });
+
+el("btnCopyImproved").addEventListener("click", ()=>copyText(improvedPrompt.value));
+el("btnCopyMd").addEventListener("click", ()=>copyText(improvedPrompt.value));
+el("btnCopyXml").addEventListener("click", ()=>copyText(improvedToXml(improvedPrompt.value)));
+el("btnRefine").addEventListener("click", runRefine);
+
+el("btnCopyOldTest").addEventListener("click", ()=>copyText(oldTestPrompt()));
+el("btnCopyNewTest").addEventListener("click", ()=>copyText(newTestPrompt()));
+el("btnCopyJudge").addEventListener("click", ()=>{ if(!el("btnCopyJudge").disabled) copyText(judgePrompt()); });
+
+el("panel-test").addEventListener("toggle", ()=>{
+  if(el("panel-test").open) setStep("test",["paste","analyze","improve","refine"]);
+});
+
+inputPrompt.addEventListener("keydown",(e)=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){ e.preventDefault(); runImprove(false); }
+});
+
+// Header glass compaction on scroll (header already carries glass; this just
+// tightens padding the way the rest of the site does)
+(function(){
+  const header = document.getElementById("header");
+  if(!header) return;
+  const update = ()=> header.classList.toggle("scrolled", window.scrollY > 12);
+  update();
+  window.addEventListener("scroll", update, {passive:true});
+})();
+
+// Mobile menu
+(function(){
+  const btn = document.getElementById("menuBtn");
+  const menu = document.getElementById("mobileMenu");
+  if(!btn || !menu) return;
+  function setOpen(open){
+    btn.classList.toggle("open", open);
+    menu.classList.toggle("open", open);
+    document.body.classList.toggle("menu-open", open);
+    btn.setAttribute("aria-expanded", open?"true":"false");
+    menu.setAttribute("aria-hidden", open?"false":"true");
+  }
+  btn.addEventListener("click", ()=> setOpen(!menu.classList.contains("open")));
+  menu.querySelectorAll("a").forEach(a=> a.addEventListener("click", (e)=>{
+    if(a.getAttribute("href")==="#"){ e.preventDefault(); }
+    setOpen(false);
+  }));
+})();
+
+// Back to top
+(function(){
+  const link = document.getElementById("backLink");
+  if(!link) return;
+  link.addEventListener("click",(e)=>{ e.preventDefault(); window.scrollTo({top:0,behavior:"smooth"}); });
+})();
+
+/* ---------- Init ---------- */
+updateJudgeBtn();
+updateCounts();
+const restored = loadState();
+if(restored){ el("restoredNote").style.display="flex"; }
+</script>
+</body>
+</html>

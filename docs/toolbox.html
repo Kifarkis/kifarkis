@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>About · Kifarkis</title>
-<meta name="description" content="Twenty-five years in other people’s systems. Kifarkis is at its core one person, and that is on purpose.">
+<title>Toolbox · Kifarkis</title>
+<meta name="description" content="Free, in-browser tools from Kifarkis Design & Automation. No sign-up, nothing sent anywhere.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-6 0 56 56'%3E%3Cpath d='M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24' stroke='%2315120E' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Crect x='6' y='22' width='32' height='28' rx='2' fill='%239C4A2A'/%3E%3Ccircle cx='22' cy='34' r='2.2' fill='%23EFEAE0'/%3E%3Crect x='20.9' y='34' width='2.2' height='6' fill='%23EFEAE0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
@@ -309,6 +309,17 @@
     .stage2 > .s2 { grid-column:1; }
     .spine { display:none; }
   }
+
+  .toolbox-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:clamp(16px,2.5vw,24px); margin-top:clamp(34px,5vh,56px); }
+  .tool-card { display:flex; flex-direction:column; gap:14px; padding:clamp(22px,3vw,30px); background:var(--bg); border:1px solid var(--rule); border-radius:6px; text-decoration:none; color:inherit; transition:border-color 0.2s ease, transform 0.2s ease; position:relative; }
+  .tool-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .tool-card .tool-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); }
+  .tool-card h2 { font-family:'Fraunces',serif; font-weight:400; font-size:clamp(1.4rem,2.2vw,1.8rem); letter-spacing:-0.02em; line-height:1.06; color:var(--ink); margin:0; }
+  .tool-card p { font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); line-height:1.55; color:var(--ink-soft); margin:0; }
+  .tool-card .tool-go { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent); margin-top:4px; }
+  .tool-card .tool-go .arr { transition:transform 0.2s ease; display:inline-block; }
+  .tool-card:hover .tool-go .arr { transform:translateX(4px); }
+  .tool-soon { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); margin-top:clamp(28px,4vh,44px); }
 </style>
 </head>
 <body>
@@ -351,9 +362,9 @@
     <a href="automation.html">AI automation</a>
     <a href="web.html">Web</a>
     <a href="work.html">Work</a>
-    <a href="about.html" class="nav-active">About</a>
-    <a href="toolbox.html">Toolbox</a>
-    <span class="lang"><a href="om.html">SV</a> / <a class="active" href="about.html">EN</a></span>
+    <a href="about.html">About</a>
+    <a href="toolbox.html" class="nav-active">Toolbox</a>
+    <span class="lang"><a href="toolbox.html">SV</a> / <a class="active" href="toolbox.html">EN</a></span>
   </nav>
   <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
     <span></span><span></span><span></span>
@@ -363,42 +374,26 @@
   <a class="mm-link" href="automation.html"><span class="idx">01</span> AI automation</a>
   <a class="mm-link" href="web.html"><span class="idx">02</span> Web &amp; design</a>
   <a class="mm-link" href="work.html"><span class="idx">03</span> Work</a>
-  <a class="mm-link nav-active" href="about.html"><span class="idx">04</span> About</a>
+  <a class="mm-link" href="about.html"><span class="idx">04</span> About</a>
   <a class="mm-link" href="contact.html"><span class="idx">05</span> Contact</a>
-  <a class="mm-link" href="toolbox.html"><span class="idx">06</span> Toolbox</a>
-  <p class="mm-lang"><a href="om.html">SV</a> / <a class="active" href="about.html">EN</a></p>
+  <a class="mm-link nav-active" href="toolbox.html"><span class="idx">06</span> Toolbox</a>
+  <p class="mm-lang"><a href="toolbox.html">SV</a> / <a class="active" href="toolbox.html">EN</a></p>
 </div>
 
 <main class="stage2 subpage">
-  <div class="arrival-glow" aria-hidden="true"></div>
-  <div class="spine" aria-hidden="true">
-    <div class="spine-track"></div>
-    <div class="spine-fill"></div>
-    <div class="spine-dot"></div>
-    
-  </div>
   <article class="s2">
-    <p class="eyebrow arr-eyebrow">About · Vellinge, Skåne</p>
-    <h1 class="p-title arr-title">Twenty-five years in other people’s systems</h1>
-    <p class="p-lede arr-lede">Kifarkis is at its core one person. That is on purpose.</p>
-    <p class="p-body reveal">My name is David Kifarkis. I built my first computer as a child, got my first job in IT support, and have honestly never stopped doing either. The technology has changed shape many times since then. The curiosity is the same.</p>
-    <div class="sec reveal">
-      <span class="mlabel">The road here</span>
-      <p class="p-body">The career went via Telenor International in Oslo to biotechs in Skåne, in 2002 I started my own company, because I knew I could do this better. Life science came in early, as a consultant to smaller biotech companies in the region, and grew over the years into roles as Head of IT and IT Director, most recently at Camurus. At Zealand Pharma the company grew from seventy employees to over three hundred while I built up the IT function, from three people to seventeen. I learned how to scale, budget, procure and what comes when, both when it is early and when it is too late. I also learned why I am at my best as a consultant.</p>
-      <p class="p-body">So I went back. Not as a retreat, but as a choice. As a consultant I sit closer to the work and further from the politics, and that is where I am at my best and leave the biggest mark.</p>
+    <p class="eyebrow arr-eyebrow">Toolbox</p>
+    <h1 class="p-title arr-title">Tools worth keeping</h1>
+    <p class="p-lede arr-lede">Small, free tools that run entirely in your browser. No sign-up, nothing sent anywhere.</p>
+    <div class="toolbox-grid">
+      <a class="tool-card reveal" href="prompt-improver.html">
+      <span class="tool-tag">Prompt tool</span>
+      <h2>Prompt Improver</h2>
+      <p>Turn a rough prompt into a structured, reusable one. Paste what you have, see what is missing, and get a cleaner version back. Everything runs in your browser.</p>
+      <span class="tool-go">Open the tool <span class="arr">→</span></span>
+    </a>
     </div>
-    <div class="sec reveal">
-      <span class="mlabel">Why this</span>
-      <p class="p-body">Small companies in regulated industries end up in a gap. Too small for the big providers, too regulated for the ordinary IT firm. At the same time they need IT, security, compliance and these days AI, preferably from someone who sees the whole instead of selling the parts separately. That gap is my home ground. The combination of GxP knowledge, hands-on IT and AI is unusual, and it is exactly what is needed there.</p>
-    </div>
-    <div class="sec reveal">
-      <span class="mlabel">The family of brands</span>
-      <p class="p-body">Kifarkis is design and automation. The sister brand MSET works with life science, validation and governance, where the demands are at their highest. And the IT support for Lund, Malmö and Vellinge takes care of the everyday for companies nearby. Different names, same hands, same way of thinking.</p>
-    </div>
-    <div class="cta-block reveal">
-      <a class="cta" href="contact.html">Write to the right person <span class="arr">→</span></a>
-      <p class="cta-note">info@kifarkis.com, or book half an hour. We start in your workflows, not in a sales presentation.</p>
-    </div>
+    <p class="tool-soon">More tools coming.</p>
   </article>
 </main>
 
