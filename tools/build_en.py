@@ -37,6 +37,7 @@ def MM_OVERLAY_EN(active, self_file, sv_file):
   <a class="mm-link{cls('arbeten')}" href="work.html"><span class="idx">03</span> Work</a>
   <a class="mm-link{cls('om')}" href="about.html"><span class="idx">04</span> About</a>
   <a class="mm-link" href="contact.html"><span class="idx">05</span> Contact</a>
+  <a class="mm-link{cls('toolbox')}" href="toolbox.html"><span class="idx">06</span> Toolbox</a>
   <p class="mm-lang"><a href="{sv_file}">SV</a> / <a class="active" href="{self_file}">EN</a></p>
 </div>"""
 
@@ -64,6 +65,7 @@ def header_en(active, self_file, sv_file):
     <a href="web.html"{cls('webb')}>Web</a>
     <a href="work.html"{cls('arbeten')}>Work</a>
     <a href="about.html"{cls('om')}>About</a>
+    <a href="toolbox.html"{cls('toolbox')}>Toolbox</a>
     <span class="lang"><a href="{sv_file}">SV</a> / <a class="active" href="{self_file}">EN</a></span>
   </nav>
 ''' + MM_OVERLAY_EN(active, self_file, sv_file)
@@ -329,3 +331,96 @@ for o in outs:
         'sv_link_back': s.count('>SV</a>') == 2,
     }
     print(' ', os.path.basename(o), checks)
+
+
+# ─────────────── TOOLBOX INDEX (toolbox.html) ───────────────
+# A simple index of free in-browser tools. Not a spine/editorial page, so it
+# uses its own card-grid body but the same shared shell (head, DECO, header,
+# footer, JS) as every other EN page. Adding a second tool later is one TOOLS entry.
+
+TOOLBOX_CSS = '''
+  .toolbox-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:clamp(16px,2.5vw,24px); margin-top:clamp(34px,5vh,56px); }
+  .tool-card { display:flex; flex-direction:column; gap:14px; padding:clamp(22px,3vw,30px); background:var(--bg); border:1px solid var(--rule); border-radius:6px; text-decoration:none; color:inherit; transition:border-color 0.2s ease, transform 0.2s ease; position:relative; }
+  .tool-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .tool-card .tool-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); }
+  .tool-card h2 { font-family:'Fraunces',serif; font-weight:400; font-size:clamp(1.4rem,2.2vw,1.8rem); letter-spacing:-0.02em; line-height:1.06; color:var(--ink); margin:0; }
+  .tool-card p { font-family:'Instrument Sans',sans-serif; font-size:var(--size-s); line-height:1.55; color:var(--ink-soft); margin:0; }
+  .tool-card .tool-go { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent); margin-top:4px; }
+  .tool-card .tool-go .arr { transition:transform 0.2s ease; display:inline-block; }
+  .tool-card:hover .tool-go .arr { transform:translateX(4px); }
+  .tool-soon { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); margin-top:clamp(28px,4vh,44px); }
+'''
+
+# Each tool: (tag, title, description, href). Add new tools here.
+TOOLS = [
+    ('Prompt tool', 'Prompt Improver',
+     'Turn a rough prompt into a structured, reusable one. Paste what you have, see what is missing, and get a cleaner version back. Everything runs in your browser.',
+     'prompt-improver.html'),
+]
+
+def tool_card(tag, title, desc, href):
+    return f'''<a class="tool-card reveal" href="{href}">
+      <span class="tool-tag">{tag}</span>
+      <h2>{title}</h2>
+      <p>{desc}</p>
+      <span class="tool-go">Open the tool <span class="arr">\u2192</span></span>
+    </a>'''
+
+def build_toolbox():
+    cards = '\n      '.join(tool_card(*t) for t in TOOLS)
+    body = f'''<div class="toolbox-grid">
+      {cards}
+    </div>
+    <p class="tool-soon">More tools coming.</p>'''
+    head_meta = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toolbox \u00b7 Kifarkis</title>
+<meta name="description" content="Free, in-browser tools from Kifarkis Design & Automation. No sign-up, nothing sent anywhere.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-6 0 56 56'%3E%3Cpath d='M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24' stroke='%2315120E' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Crect x='6' y='22' width='32' height='28' rx='2' fill='%239C4A2A'/%3E%3Ccircle cx='22' cy='34' r='2.2' fill='%23EFEAE0'/%3E%3Crect x='20.9' y='34' width='2.2' height='6' fill='%23EFEAE0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>{CSS}{TOOLBOX_CSS}</style>
+</head>'''
+    doc = f'''{head_meta}
+<body>
+{DECO}
+{header_en('toolbox', 'toolbox.html', 'toolbox.html')}
+
+<main class="stage2 subpage">
+  <article class="s2">
+    <p class="eyebrow arr-eyebrow">Toolbox</p>
+    <h1 class="p-title arr-title">Tools worth keeping</h1>
+    <p class="p-lede arr-lede">Small, free tools that run entirely in your browser. No sign-up, nothing sent anywhere.</p>
+    {body}
+  </article>
+</main>
+
+{FOOTER_EN}
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script>{JS}</script>
+</body>
+</html>'''
+    doc = doc.replace('__DECOCSS__', DECO_CSS).replace('__COMPASS__', COMPASS).replace('__ASTER__', ASTER)
+    out = '/mnt/user-data/outputs/toolbox.html'
+    open(out, 'w', encoding='utf-8').write(doc)
+    return out
+
+_tb = build_toolbox()
+_tbs = open(_tb, encoding='utf-8').read()
+print('generated (toolbox):')
+print(' ', os.path.basename(_tb), {
+    'size_kb': round(os.path.getsize(_tb)/1024),
+    'style_balance': _tbs.count('<style>') == 1 and _tbs.count('</style>') == 1,
+    'script_balance': _tbs.count('<script') == _tbs.count('</script>'),
+    'div_balance': _tbs.count('<div') == _tbs.count('</div>'),
+    'no_em_dash': '\u2014' not in _tbs,
+    'lang_en': '<html lang="en">' in _tbs,
+    'header': '<header class="header"' in _tbs,
+    'footer': '<footer class="footer"' in _tbs,
+    'toolbox_active': 'href="toolbox.html" class="nav-active"' in _tbs,
+    'has_card': 'href="prompt-improver.html"' in _tbs,
+})

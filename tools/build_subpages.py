@@ -429,6 +429,7 @@ def MM_OVERLAY(active, self_file, en_file):
   <a class="mm-link{cls('arbeten')}" href="arbeten.html"><span class="idx">03</span> Arbeten</a>
   <a class="mm-link{cls('om')}" href="om.html"><span class="idx">04</span> Om</a>
   <a class="mm-link" href="kontakt.html"><span class="idx">05</span> Kontakt</a>
+  <a class="mm-link{cls('toolbox')}" href="toolbox.html"><span class="idx">06</span> Toolbox</a>
   <p class="mm-lang"><a class="active" href="{self_file}">SV</a> / <a href="{en_file}">EN</a></p>
 </div>"""
 
@@ -456,6 +457,7 @@ def header(active, self_file, en_file):
     <a href="webb.html"{cls('webb')}>Webb</a>
     <a href="arbeten.html"{cls('arbeten')}>Arbeten</a>
     <a href="om.html"{cls('om')}>Om</a>
+    <a href="toolbox.html"{cls('toolbox')}>Toolbox</a>
     <span class="lang"><a class="active" href="{self_file}">SV</a> / <a href="{en_file}">EN</a></span>
   </nav>
 ''' + MM_OVERLAY(active, self_file, en_file)
@@ -515,6 +517,7 @@ EN_MAP = {
     'om.html': 'about.html',
     'kontakt.html': 'contact.html',
     'privacy.html': 'privacy-policy.html',
+    'toolbox.html': 'toolbox.html',
 }
 SV_MAP = {v: k for k, v in EN_MAP.items()}
 

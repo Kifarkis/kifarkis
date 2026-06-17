@@ -43,6 +43,23 @@ if '<a class="active" href="index.html">SV</a>' not in s:
 open('/mnt/user-data/outputs/index.html', 'w', encoding='utf-8').write(s)
 print('SV homepage patched + published')
 
+# ─────────────── Toolbox nav item (idempotent, runs regardless of patch state) ───────────────
+# Self-guarding so it works whether the canonical is the pre-launch or the
+# already-patched version, and never double-inserts. Label is language-neutral,
+# so the same markup serves both index.html (SV) and home.html (EN).
+if 'href="toolbox.html"' not in s:
+    s = rep1(s, '<a href="om.html">Om</a>',
+             '<a href="om.html">Om</a>\n    <a href="toolbox.html">Toolbox</a>',
+             1, 'desktop toolbox')
+    s = rep1(s, '<a class="mm-link" href="kontakt.html"><span class="idx">05</span> Kontakt</a>',
+             '<a class="mm-link" href="kontakt.html"><span class="idx">05</span> Kontakt</a>\n  <a class="mm-link" href="toolbox.html"><span class="idx">06</span> Toolbox</a>',
+             1, 'mobile toolbox')
+    open(PATH, 'w', encoding='utf-8').write(s)
+    open('/mnt/user-data/outputs/index.html', 'w', encoding='utf-8').write(s)
+    print('Toolbox nav item inserted')
+else:
+    print('Toolbox nav item already present, skipped')
+
 # ─────────────── STEP 2 · EN HOMEPAGE ───────────────
 e = s
 
