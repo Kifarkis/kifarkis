@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Voice Skill Trainer &middot; Kifarkis Toolbox</title>
+<meta name="description" content="Turn your own writing into a reusable voice skill. Paste a few samples, get a ready-to-run prompt for your Claude. Runs entirely in your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-6 0 56 56'%3E%3Cpath d='M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24' stroke='%2315120E' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Crect x='6' y='22' width='32' height='28' rx='2' fill='%239C4A2A'/%3E%3Ccircle cx='22' cy='34' r='2.2' fill='%23EFEAE0'/%3E%3Crect x='20.9' y='34' width='2.2' height='6' fill='%23EFEAE0'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="fonts/fonts.css">
+
+<style>
+  :root{
+    --bg:#EFEAE0;
+    --bg-warmer:#ECE5D3;
+    --bg-soft:#E8E2D3;
+    --panel:#EFEAE0;
+    --panel-input:#F5F2EA;
+    --ink:#15120E;
+    --ink-soft:#4A4239;
+    --accent:#9C4A2A;
+    --accent-bright:#E88B6A;
+    --muted:#7D7365;
+    --rule:#D6CEC0;
+    --rule-light:#B5AC9F;
+    --bg-soot:#C4BCB3;
+    --footer-h:56px;
+
+    --ok:#5B6B3A;
+    --ok-bg:#E9E7D3;
+    --warn:#9C4A2A;
+    --warn-bg:#EFE2D8;
+    --miss:#A6432E;
+    --miss-bg:#EEDCD4;
+
+    --radius:6px;
+    --radius-sm:4px;
+    --shadow:0 1px 2px rgba(21,18,14,.04),0 8px 30px rgba(21,18,14,.06);
+    --ease:cubic-bezier(0.16,1,0.3,1);
+
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:'Instrument Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --serif:'Fraunces',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink-soft);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    padding-bottom:var(--footer-h);
+  }
+  ::selection{background:var(--accent);color:var(--bg)}
+
+  .page-bg{position:fixed;inset:0;z-index:-2;pointer-events:none;background:var(--bg-soot)}
+  .grain{
+    position:fixed;inset:0;pointer-events:none;
+    opacity:0.20;mix-blend-mode:multiply;z-index:1;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  .header{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    padding:8px clamp(20px,4vw,56px);
+    display:flex;align-items:center;justify-content:space-between;
+    transition:background-color 0.4s ease,backdrop-filter 0.4s ease,border-color 0.4s ease,padding 0.3s ease;
+    border-bottom:1px solid transparent;
+  }
+  .header.scrolled{
+    background-color:rgba(239,234,224,0.85);
+    backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-bottom-color:var(--rule);
+    padding:6px clamp(20px,4vw,56px);
+  }
+  .header-brand{display:flex;align-items:center;gap:18px;text-decoration:none;color:var(--ink);transition:opacity 0.2s ease}
+  .header-brand:hover{opacity:0.75}
+  .logo-mark{display:flex;align-items:stretch;gap:6px;line-height:0}
+  .logo-word{font-family:'Fraunces',serif;font-size:16px;font-weight:500;letter-spacing:0.02em;line-height:1;writing-mode:vertical-rl;transform:rotate(180deg);color:var(--ink);padding:1px 0;white-space:nowrap}
+  .logo-rule-stack{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .logo-lock{width:13px;height:16px;flex-shrink:0;color:var(--ink);display:block}
+  .logo-rule{width:1.5px;flex:1;background:var(--accent);min-height:12px}
+  .header-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink)}
+  @media (max-width:540px){.header-label{display:none}}
+  .header-nav{display:flex;gap:clamp(12px,2.5vw,28px);align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em}
+  .header-nav a{text-decoration:none;color:var(--ink);padding:6px 0;transition:color 0.2s ease}
+  .header-nav a:hover{color:var(--accent)}
+  .header-nav a.nav-active{color:var(--accent)}
+  .header-nav .lang{color:var(--rule-light);padding-left:clamp(6px,1.5vw,14px);border-left:1px solid var(--rule)}
+  .header-nav .lang a{color:var(--muted);text-decoration:none;transition:color 0.2s ease}
+  .header-nav .lang a:hover{color:var(--accent)}
+  .header-nav .lang a.active{color:var(--accent)}
+  @media (max-width:720px){.header-nav a:not(.lang){display:none}.header-nav .lang a{display:inline}}
+
+  .menu-btn{display:none;background:none;border:none;cursor:pointer;padding:8px 0 8px 8px;z-index:70}
+  .menu-btn span{display:block;width:22px;height:1.5px;background:var(--ink);margin:5px 0;transition:transform 0.3s ease,opacity 0.3s ease}
+  .menu-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+  .menu-btn.open span:nth-child(2){opacity:0}
+  .menu-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+  @media (max-width:720px){.menu-btn{display:block}}
+  .mobile-menu{
+    position:fixed;inset:0;z-index:60;
+    background:rgba(196,188,179,0.96);
+    backdrop-filter:saturate(160%) blur(16px);
+    -webkit-backdrop-filter:saturate(160%) blur(16px);
+    display:flex;flex-direction:column;justify-content:center;
+    padding:0 clamp(28px,8vw,64px);
+    opacity:0;pointer-events:none;transition:opacity 0.35s ease;
+  }
+  .mobile-menu::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0.20;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+  .mobile-menu.open{opacity:1;pointer-events:auto}
+  .mm-link{font-family:'Fraunces',serif;font-size:clamp(1.2rem,4.8vw,1.55rem);color:var(--ink);text-decoration:none;padding:10px 0;display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--rule);position:relative;z-index:1}
+  .mm-link .idx{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.12em}
+  .mm-link.nav-active{color:var(--accent)}
+  .mm-lang{margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--rule-light);position:relative;z-index:1}
+  .mm-lang a{color:var(--muted);text-decoration:none}
+  .mm-lang a.active{color:var(--accent)}
+  body.menu-open{overflow:hidden}
+
+  .footer{
+    position:fixed;bottom:0;left:0;right:0;z-index:50;
+    height:var(--footer-h);
+    padding:0 clamp(20px,4vw,56px);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:rgba(239,234,224,0.85);
+    backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-top:1px solid var(--rule);
+  }
+  .footer .meta{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .footer .meta .sep{color:var(--rule-light);margin:0 6px}
+  .footer-link{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s ease;flex-shrink:0;cursor:pointer;background:none;border:none;padding:0}
+  .footer-link:hover{color:var(--accent)}
+  @media (max-width:720px){.footer .meta .full{display:none}}
+
+  .wrap{
+    max-width:920px;margin:0 auto;position:relative;z-index:2;
+    padding:clamp(78px,11vh,104px) 22px calc(var(--footer-h) + 40px);
+  }
+
+  .page-head{margin-bottom:26px}
+  .breadcrumb{
+    font-family:var(--mono);font-size:10px;font-weight:500;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--accent);
+    display:flex;align-items:center;gap:9px;margin-bottom:14px;
+  }
+  .breadcrumb .crumb-sep{color:var(--rule-light)}
+  .breadcrumb .crumb-here{color:var(--muted)}
+  h1{
+    font-family:var(--serif);font-optical-sizing:auto;
+    font-weight:500;font-size:clamp(28px,4.2vw,44px);
+    margin:0;letter-spacing:-.02em;color:var(--ink);line-height:1.02;
+  }
+  .sub{color:var(--ink-soft);margin:14px 0 0;font-size:16px;max-width:62ch;line-height:1.55}
+
+  .stepper{display:flex;gap:7px;margin:22px 0 26px;flex-wrap:wrap}
+  .step{
+    display:flex;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+    background:transparent;border:1px solid var(--rule);
+    padding:8px 13px;border-radius:var(--radius);transition:.2s var(--ease);
+  }
+  .step .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:50%;
+    background:var(--bg-soft);color:var(--muted);font-size:10px;font-weight:700;
+  }
+  .step.active{color:var(--accent);border-color:var(--accent);background:var(--warn-bg)}
+  .step.active .num{background:var(--accent);color:var(--bg)}
+  .step.done{color:var(--ok);border-color:var(--rule-light)}
+  .step.done .num{background:var(--ok);color:var(--bg)}
+
+  .panel{
+    background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px;margin-bottom:18px;position:relative;
+  }
+  .panel h2{
+    font-family:var(--serif);font-optical-sizing:auto;font-weight:500;
+    font-size:21px;margin:0 0 5px;color:var(--ink);letter-spacing:-.01em;
+  }
+  .panel .hint{color:var(--muted);font-size:14px;margin:0 0 16px;max-width:64ch}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+
+  label.field-label,.small-label{
+    display:block;font-family:var(--mono);font-weight:500;font-size:10.5px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+  }
+  textarea{
+    width:100%;font-family:var(--sans);font-size:15px;line-height:1.6;color:var(--ink);
+    border:1px solid var(--rule);border-radius:var(--radius-sm);padding:13px 15px;
+    resize:vertical;background:var(--panel-input);transition:.18s var(--ease);
+  }
+  textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(156,74,42,.12);background:var(--bg-warmer)}
+  textarea.mono{font-family:var(--mono);font-size:12.5px;line-height:1.55}
+
+  .input-meta{display:flex;justify-content:flex-end;gap:14px;margin-top:7px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)}
+
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  button{
+    font-family:var(--mono);cursor:pointer;border-radius:var(--radius-sm);
+    font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+    border:1px solid transparent;padding:11px 18px;transition:.16s var(--ease);background:transparent;
+  }
+  button:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+  .btn-primary:hover{background:var(--ink);border-color:var(--ink)}
+  .btn-secondary{background:transparent;color:var(--ink);border-color:var(--rule-light)}
+  .btn-secondary:hover{border-color:var(--ink);background:var(--bg-soft)}
+  .btn-ghost{background:transparent;color:var(--accent);border-color:transparent;padding:11px 12px}
+  .btn-ghost:hover{color:var(--ink)}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-sm{padding:8px 13px;font-size:10px}
+
+  .validation,.note-inferred,.note-restored{
+    display:none;margin-top:14px;padding:11px 15px;border-radius:var(--radius-sm);
+    font-size:13.5px;line-height:1.5;border-left:3px solid var(--accent);
+  }
+  .validation{background:var(--warn-bg);color:var(--ink);border-left-color:var(--warn)}
+  .note-inferred{background:var(--bg-warmer);color:var(--ink-soft);border-left-color:var(--accent)}
+  .note-restored{background:var(--bg-warmer);color:var(--ink-soft);border-left-color:var(--rule-light);
+    display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .note-restored button{margin:0}
+
+  .statbadge{
+    font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;
+    text-transform:uppercase;padding:5px 11px;border-radius:999px;white-space:nowrap;
+  }
+  .sb-needs{background:var(--warn-bg);color:var(--accent)}
+  .sb-improved{background:var(--bg-soft);color:var(--ink)}
+  .sb-ready{background:var(--ok-bg);color:var(--ok)}
+
+  .checklist{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+  @media(max-width:620px){.checklist{grid-template-columns:1fr}}
+  .check-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 13px;border:1px solid var(--rule);border-radius:var(--radius-sm);background:var(--panel-input);
+  }
+  .check-item .name{font-size:14px;color:var(--ink-soft)}
+  .cbadge{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;
+    text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .cb-strong{background:var(--ok-bg);color:var(--ok)}
+  .cb-clear{background:var(--warn-bg);color:var(--warn)}
+  .cb-missing{background:var(--miss-bg);color:var(--miss)}
+
+  .score-row{display:flex;align-items:center;gap:14px;margin-top:18px}
+  .score-head{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+  .score-verdict{font-family:var(--serif);font-style:italic;font-weight:400;font-size:16px;color:var(--accent)}
+  .meter{flex:1;height:6px;border-radius:999px;background:var(--bg-soft);overflow:hidden}
+  .meter > i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .6s var(--ease)}
+
+  ul.changes{margin:8px 0 0;padding:0;list-style:none}
+  ul.changes li{position:relative;padding:9px 0 9px 28px;font-size:14.5px;color:var(--ink-soft);border-bottom:1px solid var(--rule)}
+  ul.changes li:last-child{border-bottom:none}
+  ul.changes li::before{content:"*";position:absolute;left:4px;top:9px;color:var(--accent);
+    font-family:var(--serif);font-size:18px;line-height:1}
+
+  .diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:1180px){.diff-grid{grid-template-columns:1fr}}
+  .diff-col .small-label{display:flex;align-items:center;gap:8px}
+  .diff-col .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .dot-old{background:var(--rule-light)}
+  .dot-new{background:var(--accent)}
+  .diff-box{
+    font-family:var(--mono);font-size:12px;line-height:1.55;white-space:pre-wrap;
+    word-break:break-word;background:var(--panel-input);border:1px solid var(--rule);
+    border-radius:var(--radius-sm);padding:13px 15px;max-height:340px;overflow:auto;color:var(--ink-soft);
+  }
+  .diff-box.old{border-style:dashed}
+
+  .qblock{margin-bottom:15px}
+  #panel-run{border-top:2px dashed var(--accent)}
+  .handoff-eyebrow{
+    font-family:var(--mono);font-size:10px;font-weight:500;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--accent);
+    margin:0 0 10px;
+  }
+  .tryit{
+    font-family:var(--serif);font-style:italic;font-size:16.5px;line-height:1.5;
+    color:var(--ink);margin:18px 0 0;padding:14px 16px;
+    background:var(--bg-warmer);border-left:3px solid var(--accent);border-radius:var(--radius-sm);
+  }
+  .tryit em{color:var(--accent);font-style:italic}
+  .sample-row{margin-bottom:14px}
+  .sample-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .sample-ta{width:100%;font-family:var(--sans);font-size:14px;line-height:1.55;color:var(--ink);border:1px solid var(--rule);border-radius:var(--radius-sm);padding:11px 13px;resize:vertical;background:var(--panel-input);transition:.18s var(--ease)}
+  .sample-ta:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(156,74,42,.12);background:var(--bg-warmer)}
+  .qblock label{display:block;font-weight:600;font-size:14px;margin-bottom:6px;color:var(--ink)}
+  .qblock input{
+    width:100%;font-family:var(--sans);font-size:14px;border:1px solid var(--rule);
+    border-radius:var(--radius-sm);padding:11px 13px;background:var(--panel-input);transition:.18s var(--ease);
+  }
+  .qblock input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(156,74,42,.12);background:var(--bg-warmer)}
+
+  details.test{border:1px solid var(--rule);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow);overflow:hidden}
+  details.test > summary{
+    cursor:pointer;list-style:none;padding:20px 24px;
+    font-family:var(--serif);font-weight:500;font-size:19px;color:var(--ink);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  details.test > summary::-webkit-details-marker{display:none}
+  details.test > summary .chev{transition:.2s var(--ease);color:var(--muted);font-size:13px}
+  details.test[open] > summary .chev{transform:rotate(180deg)}
+  .test-body{padding:0 24px 24px;border-top:1px solid var(--rule)}
+  .test-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:620px){.test-grid{grid-template-columns:1fr}}
+
+  .hidden{display:none}
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:var(--radius-sm);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .tool-note{
+    color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+    text-align:center;margin-top:30px;line-height:1.7;
+  }
+  .tool-note .lock{display:inline-block;width:11px;height:13px;vertical-align:-2px;margin-right:6px}
+  .kbd{font-family:var(--mono);background:var(--bg-soft);border-radius:4px;padding:1px 6px;font-size:11px;color:var(--ink)}
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .meter > i{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="page-bg"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="header" id="header">
+  <a href="home.html" class="header-brand" aria-label="Kifarkis Design & Automation">
+    <span class="logo-mark" aria-hidden="true">
+      <span class="logo-word">kifarkis</span>
+      <span class="logo-rule-stack">
+        <svg class="logo-lock" viewBox="0 0 44 56" aria-hidden="true">
+          <path d="M 12 24 L 12 16 A 10 10 0 0 1 32 16 L 32 24" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="6" y="22" width="32" height="28" rx="2" fill="var(--accent)"/>
+          <circle cx="22" cy="34" r="2.2" fill="var(--bg)"/>
+          <rect x="20.9" y="34" width="2.2" height="6" fill="var(--bg)"/>
+        </svg>
+        <span class="logo-rule"></span>
+      </span>
+    </span>
+    <span class="header-label">Design &amp; Automation</span>
+  </a>
+  <nav class="header-nav">
+    <a href="automation.html">Automation</a>
+    <a href="web.html">Web</a>
+    <a href="work.html">Work</a>
+    <a href="about.html">About</a>
+    <a class="nav-active" href="toolbox.html">Toolbox</a>
+    <span class="lang"><a href="index.html">SV</a> / <a class="active" href="home.html">EN</a></span>
+  </nav>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a class="mm-link" href="automation.html"><span class="idx">01</span> Automation</a>
+  <a class="mm-link" href="web.html"><span class="idx">02</span> Web &amp; design</a>
+  <a class="mm-link" href="work.html"><span class="idx">03</span> Work</a>
+  <a class="mm-link" href="about.html"><span class="idx">04</span> About</a>
+  <a class="mm-link" href="contact.html"><span class="idx">05</span> Contact</a>
+  <a class="mm-link nav-active" href="toolbox.html"><span class="idx">06</span> Toolbox</a>
+  <p class="mm-lang"><a href="index.html">SV</a> / <a class="active" href="home.html">EN</a></p>
+</div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="breadcrumb">
+      <span class="crumb-root">Toolbox</span>
+      <span class="crumb-sep">/</span>
+      <span class="crumb-here">Personal Voice Skill Trainer</span>
+    </p>
+    <h1>Personal Voice Skill Trainer</h1>
+    <p class="sub">Turn your own writing into a reusable voice skill. Paste a few samples, add a little context, and get a ready-to-run prompt you paste into Claude. Claude does the analysis and hands back a skill that makes AI write like you. Works in other assistants too, like ChatGPT, Copilot, and Gemini. Everything here runs in your browser.</p>
+  </div>
+
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="samples"><span class="num">1</span>Samples</div>
+    <div class="step" data-step="voice"><span class="num">2</span>Voice</div>
+    <div class="step" data-step="prompt"><span class="num">3</span>Your prompt</div>
+  </div>
+
+  <section class="panel" id="panel-samples">
+    <div class="panel-head">
+      <div>
+        <h2>Paste your writing samples</h2>
+        <p class="hint">Give at least 3 pieces you have written yourself. Vary the formats if you can, an email, a message, a post, a reply. The more variety, the sharper the result.</p>
+      </div>
+      <span class="statbadge sb-needs" id="sampleBadge">0 of 3 samples</span>
+    </div>
+    <div id="sampleList"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btnAddSample">+ Add another sample</button>
+      <span class="input-meta" style="margin:0"><span id="sampleWordCount">0 words total</span></span>
+    </div>
+    <div class="note-restored" id="restoredNote">
+      <span>Restored your last session.</span>
+      <button class="btn-ghost btn-sm" id="btnDismissRestore">Dismiss</button>
+    </div>
+    <div class="note-inferred" id="lengthNote"></div>
+    <div class="validation" id="validation"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnBuild">Build my prompt</button>
+      <button class="btn-secondary" id="btnExample">Load an example sample</button>
+      <button class="btn-ghost" id="btnReset">Reset</button>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-voice">
+    <h2>A little about the voice</h2>
+    <p class="hint">These details fill in your skill so it is truly yours. Only the name is required, the rest sharpen it.</p>
+    <div class="qblock">
+      <label for="vName">Your name <span style="color:var(--accent)">*</span></label>
+      <input type="text" id="vName" autocomplete="off" placeholder="e.g. John Doe">
+    </div>
+    <div class="qblock">
+      <label for="vContext">One line, what you do and who you write to</label>
+      <input type="text" id="vContext" autocomplete="off" placeholder="e.g. a bioinformatics scientist writing to colleagues and collaborators">
+    </div>
+    <div class="qblock">
+      <label for="vFormats">What formats are your samples? (comma separated)</label>
+      <input type="text" id="vFormats" autocomplete="off" placeholder="e.g. emails, Slack messages, a report">
+    </div>
+    <div class="qblock">
+      <label for="vAvoid">Anything your writing should always avoid? (optional)</label>
+      <input type="text" id="vAvoid" autocomplete="off" placeholder="e.g. corporate buzzwords, exclamation marks">
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnRebuild">Update prompt</button>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-prompt">
+    <div class="panel-head">
+      <div>
+        <h2>Your ready-to-run prompt</h2>
+        <p class="hint">This is the full trainer prompt with your samples and details built in. Copy it, then paste it into Claude, or any other AI assistant. Fully editable if you want to tweak anything first.</p>
+      </div>
+      <span class="statbadge sb-improved" id="promptBadge">Ready</span>
+    </div>
+    <textarea id="finalPrompt" class="mono" rows="20"></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnCopyPrompt">Copy prompt</button>
+      <button class="btn-ghost" id="btnResetPrompt">Reset</button>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-run">
+    <p class="handoff-eyebrow">After this page</p>
+    <h2>Next: run it in Claude</h2>
+    <p class="hint">Your work here is done. The rest happens in your own AI assistant.</p>
+    <ul class="changes" id="runSteps">
+      <li>Copy the prompt above.</li>
+      <li>Open Claude, a new chat, a Project, or the desktop app. It works just as well in ChatGPT, Copilot, or Gemini.</li>
+      <li>Paste the prompt and send. The assistant will analyze your samples and write your voice skill.</li>
+      <li>Save what it gives you. If you use Claude, save it as <span class="kbd">SKILL.md</span> and you can upload it straight back as a Skill, or drop it into a Project. In other assistants, keep it as a text file and paste it in whenever you want that voice.</li>
+    </ul>
+    <p class="tryit">Then the payoff, try it: <em>"Using my voice skill, write a short email declining a meeting."</em> If it sounds like you, it works.</p>
+  </section>
+
+  <p class="tool-note">
+    <svg class="lock" viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 14V9.5a7 7 0 0 1 14 0V14" stroke="#9C4A2A" stroke-width="3" stroke-linecap="round" fill="none"/><rect x="3" y="14" width="20" height="16" rx="3" fill="#9C4A2A"/><circle cx="13" cy="21" r="2.4" fill="#EFEAE0"/></svg>
+    Runs entirely in your browser. Your writing never leaves this page until you paste the prompt into your AI assistant.
+  </p>
+</div>
+
+<footer class="footer" id="footer">
+  <div class="meta">
+    <span>Kifarkis Design &amp; Automation</span>
+    <span class="sep full">·</span>
+    <span class="full">Design &amp; Animation i Vellinge AB</span>
+    <span class="sep full">·</span>
+    <span class="full">Vellinge, Sweden</span>
+    <span class="sep">·</span>
+    <a href="privacy-policy.html" style="color:inherit; text-decoration:none;">Privacy</a>
+  </div>
+  <button class="footer-link" id="backLink" aria-label="Back to top">↑ Back to top</button>
+</footer>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+"use strict";
+
+
+const TRAINER_METHOD = `I want you to analyze my writing voice and create a reusable Voice Skill file I can use to make AI write like me.
+
+I'll provide 3+ examples of content I've written. Use different formats if possible (an email, a post, an article, a reply, etc.) — the more variety, the better the analysis.
+
+## YOUR TASK
+
+1. Confirm I provided at least 3 examples. If not, ask for more before proceeding.
+2. Analyze my writing patterns across ALL examples. Look for what repeats.
+3. Create a Voice Skill document in the exact markdown format below.
+4. Weave in the standing output guardrails described under "ALWAYS-ON OUTPUT GUARDRAILS" so they appear as a natural part of my voice, not as a separate company block.
+
+## HOW TO ANALYZE
+
+For each example, examine:
+
+**Structure:** How do I open? How do I close? How long are my paragraphs? Do I use headers, bullets, or flowing prose?
+
+**Rhythm:** Are my sentences short, long, or mixed? Do I use fragments? Do I vary sentence length for effect?
+
+**Word choices:** Do I use contractions? Slang? Technical language? What's my register — am I talking to a friend, a student, a colleague?
+
+**Personality:** What comes through — humor, empathy, authority, warmth, directness? How do I handle disagreement or complexity?
+
+**What I DON'T do:** This is just as important. What punctuation do I avoid? What phrases would sound fake in my voice? What tonal registers never show up?
+
+**Evidence rule:** Every pattern you identify must be backed by at least one direct quote from my examples. If you see it in 2+ examples, it's a rule. If only once, it's a tendency — note the difference.
+
+## ALWAYS-ON OUTPUT GUARDRAILS
+
+In addition to the voice you extract from my samples, the finished skill must ALWAYS encode the following standing behaviours. These are not extracted from my samples — they are fixed defaults that apply to every piece of writing produced in my voice. Weave them naturally into the relevant sections (Voice Principles, Anti-Patterns, Formatting Rules, the Voice Check) so the skill reads as one seamless personal voice, NOT as a separate "house rules" block, and NEVER name a specific company — refer to it generically (e.g. "the organisation", "the company", "where I work") and let the company be inferred from whatever workspace or context the skill is used in.
+
+The standing behaviours:
+
+1. **Concise by default.** Output should be as short as it can be while still complete. Lead with the point, cut padding. (Exception: if my own extracted voice is genuinely expansive or discursive, honour that as my natural style — apply "concise" as a lean, not a gag. The behavioural guardrails below still always apply.)
+
+2. **No AI tells.** Strip the patterns that mark text as machine-written: em dashes or hyphens used as pauses (use commas, periods, or rewrite), "it's not X, it's Y" contrast scaffolding, filler buzzwords (leverage, delve, navigate, robust, anchor), reflexive three-item rhythms padded for balance, hollow transitions ("That said,", "At the end of the day,", "It's worth noting that"), and summary-restatement closers.
+
+3. **Don't introduce unrequested content.** When refining, editing, or drafting, do not add new arguments, claims, facts, or elements I did not ask for or supply. Improve what's there; don't invent additions.
+
+4. **Ask before long output.** For any substantial piece (multi-section documents, long drafts, anything that would run to pages), confirm scope and approach with me before generating it, rather than producing a wall of text I then have to wade through.
+
+**Override rule:** these defaults always apply UNLESS I instruct otherwise in the moment. If I explicitly ask for a long detailed version, or tell the AI to go ahead and draft without checking, my live instruction wins for that task. State this override rule plainly in the finished skill so the skill never traps me.
+
+## OUTPUT FORMAT
+
+Create this exact markdown structure. This file should work as a standalone skill — someone could paste it into any AI system, or upload it directly as a Claude Skill, and get writing that sounds like me.
+
+The file MUST start with YAML frontmatter, before anything else, in this exact form:
+
+\`\`\`
+---
+name: [my-name-voice]
+description: Write in [my name]'s voice. Use whenever [my name] is drafting, tightening, or rewriting [formats analyzed], so the output sounds like them rather than generic AI writing.
+---
+\`\`\`
+
+- \`name\` must be lowercase, hyphenated, no spaces (e.g. \`david-kifarkis-voice\`).
+- \`description\` must state what the skill does and when to use it, in one to two sentences.
+- Nothing may appear before the opening \`---\` of the frontmatter, not even a title or blank line.
+- The \`# [My Name] — Voice Skill\` heading comes immediately after the closing \`---\` of the frontmatter.
+- Save the finished file as \`SKILL.md\` (this exact filename is required for direct upload as a Claude Skill).
+
+---
+
+# [My Name] — Voice Skill
+
+You are writing as [My Name]. [One sentence about what I do and who I write for.]
+
+This skill was extracted from [my name]'s actual writing across [formats analyzed]. The principles below are evidence-based patterns. When applying this skill, internalize these as a whole portrait — not a checklist to mechanically tick through. The goal is writing that I would read and think, "Yeah, that sounds like me."
+
+---
+
+## Core Identity
+
+[One paragraph. Don't list personality adjectives. Describe the RELATIONSHIP between me and my reader. Am I a mentor? A peer? An expert? A friend? What should the reader FEEL?]
+
+---
+
+## Voice Principles
+
+[Create 5-8 principles. Each one follows this exact format. At least one principle should naturally encode conciseness and the "don't add unrequested content" behaviour, framed in my voice.]
+
+### [Number]. [Principle Name]
+
+[2-3 sentences explaining what this principle means and why it matters to my voice.]
+
+**The rule:** [One clear, actionable sentence an AI can follow.]
+
+| Instead of | Write |
+|------------|-------|
+| [Generic/AI-default version] | [How I actually write it — quote from my examples] |
+| [Another generic version] | [My version] |
+
+[Optional: when this principle flexes or has exceptions]
+
+---
+
+## Signature Patterns
+
+### How I Open
+[List 3+ actual opening lines from my examples. Then describe the pattern.]
+
+### How I Close
+[Same format: 3+ actual closing lines, then the pattern.]
+
+### Transitions
+[List the actual transition phrases and words I use to move between ideas. Pull directly from examples.]
+
+### Analogies & Examples
+[Do I use analogies? What kind? Provide 2-3 examples from my writing and describe the pattern.]
+
+---
+
+## Anti-Patterns: What My Voice NEVER Does
+
+[Identify 5-10 things that would make content NOT sound like me. This section must also absorb the "No AI tells" guardrail above — fold those patterns in here as things my voice never does, with Instead-of/Write examples. Format each as:]
+
+### No [Pattern Name]
+
+[One sentence: why this breaks my voice]
+
+| Instead of | Write |
+|------------|-------|
+| [The wrong version] | [The correct version for my voice] |
+
+[Look specifically for: punctuation I avoid (em dashes especially — fold the guardrail here), filler phrases, structural patterns I never use, tonal registers that don't fit, and AI tells.]
+
+---
+
+## Standing Output Behaviour
+
+[A short section, written in my voice, covering the always-on behaviours that are about HOW output is produced rather than word-level style: be concise by default, don't introduce content I didn't ask for, and ask before generating long or multi-section output. Then state the override rule clearly: these apply unless I say otherwise in the moment, and my live instruction always wins for that task. Keep this generic — refer to "the organisation" or "where I work", never a named company.]
+
+---
+
+## Formatting & Language Rules
+
+- **Paragraph length:** [typical sentence count per paragraph]
+- **Sentence style:** [short and punchy? long and flowing? mixed with intention?]
+- **Contractions:** [always/sometimes/never — and which ones]
+- **Headers:** [style — questions? statements? capitalization?]
+- **Lists vs prose:** [when do I use bullets? when do I write it out?]
+- **Bold/italic:** [what gets emphasis and why]
+- **Emoji:** [frequency, placement, which ones if any]
+- **Length default:** [state the concise-by-default lean here, honouring my natural style if it is genuinely expansive]
+
+---
+
+## Format Adaptation
+
+| Format | What stays the same | What flexes |
+|--------|-------------------|-------------|
+| Short reply/comment | [core principles that always hold] | [length, depth, formality shifts] |
+| Social media post | [core principles] | [what changes] |
+| Long article/email | [core principles] | [what changes] |
+| Professional/formal context | [core principles] | [what changes] |
+
+---
+
+## The Voice Check
+
+[Write 3 specific questions I can ask myself to verify if a piece of content actually sounds like me. At least one should target conciseness or the no-AI-tells guardrail.]
+
+1. [First check — targets my most distinctive voice quality]
+2. [Second check — targets my most important anti-pattern, including AI tells]
+3. [Third check — targets my signature opening or closing pattern]
+
+---
+
+## RULES FOR YOUR ANALYSIS
+
+- The "Instead of / Write" tables are the most important part of this document. Create at least 15 total across all sections. These are what make the skill actually work.
+- Pull ACTUAL phrases from my examples as evidence. Don't paraphrase or invent.
+- The anti-patterns section is as valuable as the voice principles. AI will default to generic patterns unless explicitly told not to.
+- Write the skill as instructions TO an AI, not as a report ABOUT me. Use "Write as..." and "Never..." and "Always..." — not "The author tends to..."
+- The standing output guardrails must be present in every skill you generate, woven in naturally and kept company-agnostic. Never name a specific company; refer to it generically and let context supply it.
+- The output must be a reusable file. If someone pastes this into a Claude Project, ChatGPT custom instructions, or saves it as a SKILL.md file, it should work immediately.
+- The file must open with the YAML frontmatter block (\`---\`, \`name:\`, \`description:\`, \`---\`) as the very first lines, with nothing before it, and must be saved as \`SKILL.md\` so it can be uploaded directly as a Claude Skill without triggering a format error.`;
+
+const EXAMPLE_SAMPLES = [
+  "Hi, I trust all is well. I have looked into the storage question you raised, and the short version is that it will cost less than you might fear, probably between 200 and 500 kr a month depending on how much we move. I will put together the exact numbers and send them over once I have tested the transfer. If you have any questions in the meantime, just let me know.",
+  "Hi Anna, thanks so much for reaching out, and sorry the jacket arrived with a mark on the sleeve. That is not the standard we want. I have already put a replacement in the post to you today, and you do not need to send the first one back, please keep it or pass it on to someone who could use it. You should have the new one by Friday. Let me know if anything else comes up.",
+  "New on the menu this week: slow-roast lamb with burnt aubergine and a lot of garlic. We only made forty portions because that is all the oven fits, so if you want one, book early. Kitchen opens at five. See you there.",
+  "Hi Peter, I have gone through the Q2 figures and everything reconciles cleanly, with one thing worth flagging. Your travel costs are up about 30 percent on last quarter, which is fine if it was the trade show, but worth keeping an eye on if it becomes the pattern. I have attached the summary with the VAT already split out. Happy to walk you through any line on a call if that is easier.",
+  "Hello, this is a reminder that you have an appointment with Dr. Lindqvist on Tuesday the 14th at 10:30. Please bring a list of any medication you are currently taking. If you feel unwell before then or need to move the time, call us on the number below and we will find something that works. Take care.",
+  "Autumn is when people finally slow down enough to read, so that is when we are launching. The idea is simple: one honest email a week, no countdown timers, no fake scarcity, just a good story and a link if you want it. We think that is rare enough now to stand out. Soft launch goes to the existing list first, then we open it up.",
+  "Hi Mark, had a look at the photos you sent. The dripping is coming from the mixer tap, not the pipe, so it is a smaller job than you thought. I can swap the cartridge for about 800 kr including the part, or replace the whole tap if you would rather, which runs closer to 2000 with a mid-range one. Either way it is an hour of work. Let me know which you prefer and I will bring what I need.",
+  "Hi everyone, quick update on next week. I have moved the deadline for the essay to Thursday, because a few of you asked for the weekend and that seemed fair to the whole group. Remember the point is not to sound clever, it is to show me you actually wrestled with the argument. Bring questions to the seminar, even half-formed ones, those are usually the good ones.",
+  "Hi all, summary from this morning's run. The assay came back clean for three of the four samples, and the fourth is almost certainly a pipetting error rather than a real signal, since the duplicate was fine, so I am not worried about it. I have logged everything in the shared sheet and flagged the one to repeat. Next step is to line up the sequencing, and for that I need to know how many samples we are batching per run, because it changes the cost quite a bit. If someone can confirm that by Wednesday I can get the order in before the week is out.",
+  "Five years ago I started this business from the spare room, mostly because I was tired of doing good work for people who did not care about it. I told myself I would rather earn less and pick who I work with than fill the calendar with jobs that drain me. It turned out to be the right call, not because the money came easy, it did not, but because the work stayed good, and the clients who stuck around became the kind you actually look forward to hearing from. If you are thinking about doing the same, my only advice is this: protect who you say yes to as carefully as you chase who you sell to."
+];
+
+let _samplePool = [];
+function nextExampleSample(){
+  if(_samplePool.length === 0){
+    _samplePool = EXAMPLE_SAMPLES.map((_,i)=>i);
+    for(let i=_samplePool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [_samplePool[i],_samplePool[j]]=[_samplePool[j],_samplePool[i]]; }
+  }
+  return EXAMPLE_SAMPLES[_samplePool.pop()];
+}
+
+const STORAGE_KEY = "kifarkis_voice_skill_trainer_v1";
+const el = id => document.getElementById(id);
+
+let saveTimer = null;
+let sampleCount = 0;
+
+let toastTimer;
+function toast(msg){
+  const t = el("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"),1500);
+}
+function copyText(text){
+  navigator.clipboard.writeText(text).then(()=>toast("Copied to clipboard")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);
+    ta.select();try{document.execCommand("copy");toast("Copied");}catch(e){toast("Copy failed");}
+    document.body.removeChild(ta);
+  });
+}
+
+function addSample(value){
+  sampleCount++;
+  const n = sampleCount;
+  const wrap = document.createElement("div");
+  wrap.className = "sample-row";
+  wrap.dataset.n = n;
+  wrap.innerHTML =
+    '<div class="sample-head">' +
+      '<span class="small-label" style="margin:0">Sample ' + n + '</span>' +
+      '<button class="btn-ghost btn-sm sample-del" title="Remove this sample">Remove</button>' +
+    '</div>' +
+    '<textarea class="sample-ta" rows="4" placeholder="Paste a piece of your own writing here."></textarea>';
+  el("sampleList").appendChild(wrap);
+  const ta = wrap.querySelector(".sample-ta");
+  if(value) ta.value = value;
+  ta.addEventListener("input", ()=>{ updateSampleMeta(); queueSave(); });
+  wrap.querySelector(".sample-del").addEventListener("click", ()=>{
+    wrap.remove(); renumberSamples(); updateSampleMeta(); queueSave();
+  });
+  updateSampleMeta();
+}
+function renumberSamples(){
+  let i=0;
+  document.querySelectorAll(".sample-row").forEach(r=>{
+    i++; r.querySelector(".small-label").textContent = "Sample " + i;
+  });
+  sampleCount = i;
+}
+function getSamples(){
+  return Array.from(document.querySelectorAll(".sample-ta"))
+    .map(t=>t.value.trim()).filter(Boolean);
+}
+function updateSampleMeta(){
+  const samples = getSamples();
+  const words = samples.join(" ").trim();
+  const wc = words ? words.split(/\s+/).filter(Boolean).length : 0;
+  el("sampleWordCount").textContent = wc + (wc===1?" word total":" words total");
+  const n = samples.length;
+  const badge = el("sampleBadge");
+  badge.textContent = n + " of 3 samples";
+  if(n>=3){ badge.className = "statbadge sb-ready"; }
+  else { badge.className = "statbadge sb-needs"; }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      samples: getSamples(),
+      name: el("vName").value,
+      context: el("vContext").value,
+      formats: el("vFormats").value,
+      avoid: el("vAvoid").value,
+      prompt: el("finalPrompt").value,
+      ts: Date.now()
+    }));
+  }catch(e){}
+}
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveState,400); }
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const s = JSON.parse(raw);
+    if(!s || (!s.samples || !s.samples.length) && !s.prompt) return false;
+    el("sampleList").innerHTML=""; sampleCount=0;
+    (s.samples && s.samples.length ? s.samples : ["","",""]).forEach(v=>addSample(v));
+    el("vName").value = s.name || "";
+    el("vContext").value = s.context || "";
+    el("vFormats").value = s.formats || "";
+    el("vAvoid").value = s.avoid || "";
+    if(s.prompt){
+      el("finalPrompt").value = s.prompt;
+      ["panel-voice","panel-prompt","panel-run"].forEach(id=>el(id).classList.remove("hidden"));
+      el("promptBadge").className="statbadge sb-improved";
+      setStep("prompt",["samples","voice"]);
+    }
+    updateSampleMeta();
+    return true;
+  }catch(e){ return false; }
+}
+function clearState(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
+
+function slugify(name){
+  return (name||"my").toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"") || "my";
+}
+function buildPrompt(){
+  const samples = getSamples();
+  const name = el("vName").value.trim();
+  const context = el("vContext").value.trim();
+  const formats = el("vFormats").value.trim();
+  const avoid = el("vAvoid").value.trim();
+
+  let lead = "";
+  if(name){ lead += "My name is " + name + ".\n"; }
+  if(context){ lead += "In one line: " + context + ".\n"; }
+  if(formats){ lead += "The samples below are: " + formats + ".\n"; }
+  if(avoid){ lead += "Something my writing should always avoid: " + avoid + ".\n"; }
+  if(lead){ lead = lead + "\nUse " + (name||"my name") + " for the name placeholders, and the slug " + slugify(name) + " for the skill name.\n\n"; }
+
+  const exampleBlock = samples.length
+    ? samples.map((s,i)=>"- Example " + (i+1) + ":\n\n" + s).join("\n\n")
+    : "- Example 1 - (paste here)\n\n- Example 2 - (paste here)\n\n- Example 3 - (paste here)";
+
+  return lead + TRAINER_METHOD + "\n\n## EXAMPLES\n\n" + exampleBlock;
+}
+
+function setStep(active, done){
+  done = done || [];
+  document.querySelectorAll(".step").forEach(s=>{
+    const k = s.dataset.step;
+    s.classList.toggle("active", k===active);
+    s.classList.toggle("done", done.includes(k));
+  });
+}
+
+function showValidation(msg){ const v=el("validation"); v.textContent=msg; v.style.display="block"; }
+function hideValidation(){ el("validation").style.display="none"; }
+
+function checkSampleLength(samples){
+  const note = el("lengthNote");
+  const total = samples.join(" ").trim().split(/\s+/).filter(Boolean).length;
+  const avg = samples.length ? total / samples.length : 0;
+  if(avg < 50){
+    note.textContent = "Your samples are on the short side, about " + Math.round(avg) + " words each on average. The prompt will still work, but the analysis gets sharper with longer pieces, aim for 50 or more words per sample if you can.";
+    note.style.display = "block";
+  } else {
+    note.style.display = "none";
+  }
+}
+
+function runBuild(){
+  const samples = getSamples();
+  if(samples.length < 3){
+    showValidation("Add at least 3 samples first. Claude needs a few varied pieces to find what repeats in your writing.");
+    return;
+  }
+  checkSampleLength(samples);
+  if(!el("vName").value.trim()){
+    ["panel-voice","panel-prompt","panel-run"].forEach(id=>el(id).classList.remove("hidden"));
+    hideValidation();
+    el("finalPrompt").value = buildPrompt();
+    el("promptBadge").className="statbadge sb-improved";
+    setStep("voice",["samples"]);
+    el("vName").focus();
+    el("panel-voice").scrollIntoView({behavior:"smooth",block:"start"});
+    saveState();
+    return;
+  }
+  hideValidation();
+  el("finalPrompt").value = buildPrompt();
+  ["panel-voice","panel-prompt","panel-run"].forEach(id=>el(id).classList.remove("hidden"));
+  el("promptBadge").className="statbadge sb-improved";
+  setStep("prompt",["samples","voice"]);
+  saveState();
+  el("panel-prompt").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function rebuild(){
+  el("finalPrompt").value = buildPrompt();
+  setStep("prompt",["samples","voice"]);
+  saveState();
+  toast("Prompt updated");
+  el("panel-prompt").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function fullReset(){
+  el("sampleList").innerHTML=""; sampleCount=0;
+  addSample(""); addSample(""); addSample("");
+  ["vName","vContext","vFormats","vAvoid","finalPrompt"].forEach(id=>el(id).value="");
+  ["panel-voice","panel-prompt","panel-run"].forEach(id=>el(id).classList.add("hidden"));
+  hideValidation();
+  el("lengthNote").style.display="none";
+  el("restoredNote").style.display="none";
+  updateSampleMeta();
+  clearState();
+  setStep("samples");
+  el("panel-samples").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+el("btnAddSample").addEventListener("click", ()=>{ addSample(""); queueSave(); });
+el("btnBuild").addEventListener("click", runBuild);
+el("btnExample").addEventListener("click", ()=>{
+  const empties = Array.from(document.querySelectorAll(".sample-ta")).filter(t=>!t.value.trim());
+  if(empties.length){ empties[0].value = nextExampleSample(); }
+  else { addSample(nextExampleSample()); }
+  updateSampleMeta(); hideValidation(); queueSave();
+});
+el("btnReset").addEventListener("click", fullReset);
+el("btnResetPrompt").addEventListener("click", fullReset);
+el("btnRebuild").addEventListener("click", rebuild);
+el("btnCopyPrompt").addEventListener("click", ()=>{
+  navigator.clipboard.writeText(el("finalPrompt").value).then(()=>{
+    toast("Copied, now paste it into Claude");
+    setStep(null,["samples","voice","prompt"]);
+    el("panel-run").scrollIntoView({behavior:"smooth",block:"start"});
+  }).catch(()=>{ copyText(el("finalPrompt").value); });
+});
+el("btnDismissRestore").addEventListener("click", ()=>{ el("restoredNote").style.display="none"; });
+["vName","vContext","vFormats","vAvoid"].forEach(id=> el(id).addEventListener("input", queueSave));
+el("finalPrompt").addEventListener("input", queueSave);
+
+(function(){
+  const header = document.getElementById("header");
+  if(!header) return;
+  const update = ()=> header.classList.toggle("scrolled", window.scrollY > 12);
+  update();
+  window.addEventListener("scroll", update, {passive:true});
+})();
+
+(function(){
+  const btn = document.getElementById("menuBtn");
+  const menu = document.getElementById("mobileMenu");
+  if(!btn || !menu) return;
+  function setOpen(open){
+    btn.classList.toggle("open", open);
+    menu.classList.toggle("open", open);
+    document.body.classList.toggle("menu-open", open);
+    btn.setAttribute("aria-expanded", open?"true":"false");
+    menu.setAttribute("aria-hidden", open?"false":"true");
+  }
+  btn.addEventListener("click", ()=> setOpen(!menu.classList.contains("open")));
+  menu.querySelectorAll("a").forEach(a=> a.addEventListener("click", (e)=>{
+    if(a.getAttribute("href")==="#"){ e.preventDefault(); }
+    setOpen(false);
+  }));
+})();
+
+(function(){
+  const link = document.getElementById("backLink");
+  if(!link) return;
+  link.addEventListener("click",(e)=>{ e.preventDefault(); window.scrollTo({top:0,behavior:"smooth"}); });
+})();
+
+const restored = loadState();
+if(restored){ el("restoredNote").style.display="flex"; }
+else { addSample(""); addSample(""); addSample(""); }
+updateSampleMeta();
+</script>
+</body>
+</html>
